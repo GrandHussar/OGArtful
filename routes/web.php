@@ -22,6 +22,7 @@ use App\Http\Controllers\DeleteTemporaryImageController;
 use App\Http\Controllers\FollowerController;
 use App\Http\Controllers\ChatifyController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Auth;
 
 Auth::routes(['verify' => true]);
@@ -49,7 +50,6 @@ Broadcast::routes(['middleware' => ['auth:api']]);
 
 
 Route::get('/', [PostController::class, 'index'])->name('dashboard');
-
 Route::get('/restricted', function () {
     return Inertia::render('Restricted');
 })->name('restricted');
@@ -79,7 +79,7 @@ Route::middleware(['auth'])->group(function () {
 // Route::post('/users/{user}/unfollow', [FollowerController::class, 'unfollow'])->name('unfollowUser');
 
 Route::middleware(['auth', CheckRestriction::class])->group(function () {
-    
+
     Route::get('/draw', function () {
         return Inertia::render('Draw');
     })->middleware(['auth'])->name('draw');
@@ -124,7 +124,7 @@ Route::get('/auth/google/callback', [GoogleController::class, 'handleGoogleCallb
 Route::post('/api/upload-image', [CollageController::class, 'uploadImage'])->name('upload.image');
 
 Route::middleware(['auth', CheckRestriction::class])->group(function () {
-    Route::get('/dashboard', [PostController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('newdashboard');
 
     // Middleware for Super Admin
     Route::middleware([RoleMiddleware::class . ':super_admin'])->group(function () {
