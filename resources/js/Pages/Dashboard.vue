@@ -11,7 +11,7 @@
                     <template v-for="post in filteredPosts" :key="post.id">
                         <Card :post="post" :comments="comments[post.id] || []"/>
                         <!-- Show moderation options for admins -->
-                        <div v-if="authUser && authUser.roles && ['super_admin', 'it_admin'].includes(authUser.roles)">
+                        <div v-if="authUser && authUser.roles && ['super_admin', 'it_admin'].includes(authUser.roles[0])">
                             <button @click="moderatePost(post.id)">Moderate</button>
                             <button @click="deletePost(post.id)" class="text-red-500">Delete</button> <!-- Delete button -->
                         </div>
@@ -63,7 +63,7 @@
                                 />
                             </q-avatar>
                             <div class="user-details">
-                                <a :href="route('profile.page', user.id)"class="user-name text-sm font-semibold">{{ user.name }}</a>
+                                <a :href="route('profile.page', user.id)" class="user-name text-sm font-semibold">{{ user.name }}</a>
                                 <div class="user-email text-xs text-gray-500">@{{ user.username }}</div>
                             </div>
                             <FollowButton
@@ -92,7 +92,7 @@ import { useFollowStore } from '@/Components/useFollowStore.js';
 import FollowButton from "@/Components/FollowButton.vue";
 const { props } = usePage();
 const posts = ref(props.posts);
-const authUser = ref(props.auth.user);
+const authUser = ref(props.auth.user || {});
 const topUsers = computed(() => {
   return (props.topUsers || []).filter(user => user.id !== authUser.value.id);
 });

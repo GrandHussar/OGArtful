@@ -52,7 +52,7 @@
 
                 <q-btn
                     @click="thepost = true"
-                    v-if="$q.screen.gt.xs"
+                    v-if="$q.screen.gt.xs && authUser"
                     flat
                     rounded
                     dense
@@ -66,7 +66,7 @@
                     Create
                 </q-btn>
                 <q-btn
-                    v-if="!isTherapist"
+                    v-if="authUser && !isTherapist"
                     @click="showTherapistChatDialog = true"
                     round
                     dense
@@ -79,7 +79,7 @@
                     <q-tooltip>Therapist</q-tooltip>
                 </q-btn>
                 <div class="q-gutter-sm row items-center no-wrap">
-                    <Link :href="route('chat')">
+                    <Link v-if="authUser" :href="route('chat')">
                         <q-btn
                             round
                             dense
@@ -98,19 +98,17 @@
                         </q-badge>
                         <q-tooltip>Notifications</q-tooltip>
                     </q-btn> -->
-                    <q-btn dense flat no-wrap>
+                    <q-btn dense flat no-wrap v-if="authUser">
                         <q-avatar rounded size="35px">
                             <img
                                 style="background: white; border-radius: 20px"
-                                :src="
-                                    $page.props.auth.user.profile_image_url
-                                        ? `/storage/images/${$page.props.auth.user.profile_image_url}`
-                                        : '/storage/images/TEMPPROFILE.png'
-                                "
+                                :src="authUser.profile_image_url
+                                    ? `/storage/images/${authUser.profile_image_url}`
+                                    : '/storage/images/TEMPPROFILE.png'"
                                 alt="Profile Image"
                             />
                         </q-avatar>
-                        <q-icon name="arrow_drop_down" size="19px"  :style="{ color: siteSettings.icon_color }"  />
+                        <q-icon name="arrow_drop_down" size="19px"  :style="{ color: siteSettings.icon_color }" />
 
                         <q-menu auto-close>
                             <q-list dense>
@@ -118,9 +116,7 @@
                                     <q-item-section>
                                         <div>
                                             Signed in as
-                                            <strong>{{
-                                                $page.props.auth.user.name
-                                            }}</strong>
+                                            <strong>{{ authUser.name }}</strong>
                                         </div>
                                     </q-item-section>
                                 </q-item>
@@ -129,12 +125,7 @@
                                 <q-item clickable class="GL__menu-link">
                                     <q-item-section
                                         ><Link
-                                            :href="
-                                                route(
-                                                    'profile.page',
-                                                    $page.props.auth.user.id
-                                                )
-                                            "
+                                            :href="route('profile.page', authUser.id)"
                                             >Your profile</Link
                                         ></q-item-section
                                     >
@@ -142,12 +133,7 @@
                                 <q-item clickable class="GL__menu-link">
                                       <q-item-section
                                         ><Link
-                                            :href="
-                                                route(
-                                                    'profile.edit',
-                                                    $page.props.auth.user.id
-                                                )
-                                            "
+                                            :href="route('profile.edit', authUser.id)"
                                             >Edit profile</Link
                                         ></q-item-section>
                                 </q-item>
@@ -165,6 +151,20 @@
                             </q-list>
                         </q-menu>
                     </q-btn>
+
+                    <!-- Guest view -->
+                    <div v-else>
+                        <Link :href="route('login')">
+                            <q-btn flat rounded dense no-wrap color="black">
+                                Login
+                            </q-btn>
+                        </Link>
+                        <Link :href="route('register')">
+                            <q-btn flat rounded dense no-wrap color="black">
+                                Register
+                            </q-btn>
+                        </Link>
+                    </div>
                 </div>
             </q-toolbar>
         </q-header>
@@ -230,7 +230,7 @@
                     </Link>
                     <q-separator class="q-my-md" />
                     <Link
-                        :href="route('profile.page', $page.props.auth.user.id)"
+                        :href="route('profile.page', authUser?.id ?? 0)"
                     >
                         <q-item clickable class="GPL__drawer-item">
                             <q-item-section avatar>
@@ -242,7 +242,7 @@
                         </q-item>
                     </Link>
 
-                    <Link :href="route('profile.edit')">
+                    <Link :href="route('profile.edit')" v-if="authUser">
                         <q-item clickable class="GPL__drawer-item">
                             <q-item-section avatar>
                                 <q-icon name="fa-solid fa-gear" :style="{ color: siteSettings.icon_color }"/>
@@ -579,7 +579,7 @@ const submit = () => {
     });
 };
 
-console.log("auth.user:", auth.user);
+
 
 const roles = auth.user?.roles.map((role) => role.name) || [];
 console.log("roles:", roles);
