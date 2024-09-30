@@ -421,6 +421,7 @@ import MessageSenderComponent from '@/Components/SendMessage.vue';
 
 const FilePond = vueFilePond(FilePondPluginImagePreview);
 const { auth } = usePage().props;
+const authUser = computed(() => auth.user || null);
 console.log("auth.user:", auth.user);
 // Reactive variables
 const drawer = ref(false);
