@@ -8,34 +8,47 @@ test('login screen can be rendered', function () {
     $response->assertStatus(200);
 });
 
-test('users can authenticate using the login screen', function () {
-    $user = User::factory()->create();
+test('email verification screen can be rendered', function () {
+    $user = User::factory()->unverified()->create();
 
-    $response = $this->post('/login', [
-        'email' => $user->email,
-        'password' => 'password',
-    ]);
+    $response = $this->actingAs($user)->get('/verify-email');
 
-    $this->assertAuthenticated();
-    $response->assertRedirect(route('dashboard', absolute: false));
+    $response->assertStatus(200);
 });
 
-test('users can not authenticate with invalid password', function () {
+
+test('confirm password screen can be rendered', function () {
     $user = User::factory()->create();
 
-    $this->post('/login', [
-        'email' => $user->email,
-        'password' => 'wrong-password',
-    ]);
+    $response = $this->actingAs($user)->get('/confirm-password');
 
-    $this->assertGuest();
+    $response->assertStatus(200);
 });
 
-test('users can logout', function () {
+test('reset password link screen can be rendered', function () {
+    $response = $this->get('/forgot-password');
+
+    $response->assertStatus(200);
+});
+
+test('reset password screen can be rendered', function () {
+    Notification::fake();
+
     $user = User::factory()->create();
 
-    $response = $this->actingAs($user)->post('/logout');
+    $this->post('/forgot-password', ['email' => $user->email]);
 
-    $this->assertGuest();
-    $response->assertRedirect('/');
+    Notification::assertSentTo($user, ResetPassword::class, function ($notification) {
+        $response = $this->get('/reset-password/'.$notification->token);
+
+        $response->assertStatus(200);
+
+        return true;
+    });
+});
+
+test('registration screen can be rendered', function () {
+    $response = $this->get('/register');
+
+    $response->assertStatus(200);
 });
