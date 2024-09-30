@@ -47,14 +47,8 @@ Broadcast::routes(['middleware' => ['auth:api']]);
 //     Route::post('/chat/setActiveStatus', [MessagesController::class, 'setActiveStatus'])->name('chat.setActiveStatus');
 // });
 
-Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
-});
+
+Route::get('/', [PostController::class, 'index'])->name('dashboard');
 
 Route::get('/restricted', function () {
     return Inertia::render('Restricted');
@@ -85,7 +79,7 @@ Route::middleware(['auth'])->group(function () {
 // Route::post('/users/{user}/unfollow', [FollowerController::class, 'unfollow'])->name('unfollowUser');
 
 Route::middleware(['auth', CheckRestriction::class])->group(function () {
-    Route::get('/dashboard', [PostController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
+    
     Route::get('/draw', function () {
         return Inertia::render('Draw');
     })->middleware(['auth'])->name('draw');
