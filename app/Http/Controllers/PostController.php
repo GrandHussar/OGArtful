@@ -72,10 +72,11 @@ class PostController extends Controller
     
         // Map additional properties to posts
         $posts = $paginatedPosts->getCollection()
-            ->map(function ($post) use ($authUser) {
-                $post->isFollowing = $authUser->follows($post->user);
-                return $post;
-            });
+        ->map(function ($post) use ($authUser) {
+            $post->isFollowing = $authUser ? $authUser->follows($post->user) : null;
+            return $post;
+        });
+    
     
         $paginatedPosts->setCollection($posts);
     

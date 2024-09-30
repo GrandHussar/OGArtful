@@ -243,13 +243,19 @@ const toggleFollow = async (userId) => {
                         formattedDate
                     }}</span>
                 </div>
-         <template v-if="post.user.id !== $page.props.auth.user.id">
-            <FollowButton
-            @click.stop
-            :is-following="isFollowing(post.user.id)"
-            @toggle-follow="toggleFollow(post.user.id)"
-            />
-        </template>
+                <template v-if="$page.props.auth?.user && post.user.id !== $page.props.auth.user.id">
+    <FollowButton
+        @click.stop
+        :is-following="isFollowing(post.user.id)"
+        @toggle-follow="toggleFollow(post.user.id)"
+    />
+</template>
+<template v-else>
+    <!-- Optionally show a message or disabled button for guest users -->
+    <div v-if="!$page.props.auth?.user">
+        <p class="text-gray-500">Login to follow users</p>
+    </div>
+</template>
             </div>
 
             <q-btn-dropdown
