@@ -185,7 +185,7 @@
         >
             <q-scroll-area class="fit" :horizontal-thumb-style="{ opacity: 0 }">
                 <q-list padding>
-                    <Link :href="route('dashboard')">
+                    <Link :href="route('newdashboard')">
                         <q-item clickable class="GPL__drawer-item">
                             <q-item-section avatar>
                                 <q-icon name="dashboard" :style="{ color: siteSettings.icon_color }"/>
