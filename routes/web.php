@@ -126,6 +126,12 @@ Route::post('/api/upload-image', [CollageController::class, 'uploadImage'])->nam
 Route::middleware(['auth', CheckRestriction::class])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('newdashboard');
 
+    // Route to fetch moods data (GET)
+    Route::get('/moods', [DashboardController::class, 'getMoods'])->name('moods.get');
+
+    // Route to store or update mood data (POST)
+    Route::post('/moods', [DashboardController::class, 'store'])->name('moods.store');
+
     // Middleware for Super Admin
     Route::middleware([RoleMiddleware::class . ':super_admin'])->group(function () {
         Route::get('/super-admin', function () {

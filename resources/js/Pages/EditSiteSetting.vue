@@ -87,7 +87,7 @@
 import { ref, watchEffect } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import { Inertia } from '@inertiajs/inertia';
-import AuthenticadeLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 
 const props = defineProps({
   siteSetting: {
