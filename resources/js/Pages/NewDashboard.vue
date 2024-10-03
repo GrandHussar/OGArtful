@@ -28,7 +28,7 @@
                         <q-dialog v-model="showPicker">
                             <q-card>
                                 <q-card-section>
-                                    <h3>Select Your Mood for {{ selectedDate }}</h3>
+                                    <h4>Select Your Mood for {{ moment(selectedDate.value).format('YYYY-MM-DD') }}</h4>
                                     <div class="mood-options">
                                         <button
                                             v-for="mood in moods"
@@ -45,7 +45,21 @@
                                 </q-card-actions>
                             </q-card>
                         </q-dialog>
+                        <div v-if="isTherapist" class="mood-summary-section">
+                    <q-card class="mood-summary-card">
+                        <q-card-section>
+                            <h3 class="text-lg font-semibold mb-3">Weekly Mood Summary</h3>
+                            <ApexCharts type="pie" :options="chartOptions" :series="weeklyMoodSummary" />
+                        </q-card-section>
+                    </q-card>
 
+                    <q-card class="mood-summary-card">
+                        <q-card-section>
+                            <h3 class="text-lg font-semibold mb-3">Monthly Mood Summary</h3>
+                            <ApexCharts type="pie" :options="chartOptions" :series="monthlyMoodSummary" />
+                        </q-card-section>
+                    </q-card>
+                </div>
                         <!-- Display validation errors -->
                         <div v-if="errors" class="error-messages">
                             <ul>
@@ -104,7 +118,7 @@ import { ref, onMounted, watch } from 'vue';
 import { useForm } from '@inertiajs/inertia-vue3';
 import { useToast } from 'vue-toastification';
 import moment from 'moment';
-
+import ApexCharts from 'vue3-apexcharts';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 
 // Initialize toast notifications
@@ -145,6 +159,7 @@ const fetchMoods = async () => {
     console.log('Fetched Moods:', response.data);
     if (Array.isArray(response.data)) {
       userMoods.value = response.data;
+      updateMoodSummaries();
     } else {
       console.error('Unexpected response format:', response.data);
       toast.error('Failed to load moods.');
@@ -229,7 +244,59 @@ const updateCalendarAttributes = () => {
     };
   });
 };
+const userRole = ref('therapist'); // Replace with actual user role
+const isTherapist = ref(userRole.value === 'therapist');
 
+// Add data for mood summaries
+const weeklyMoodSummary = ref([]);
+const monthlyMoodSummary = ref([]);
+
+// Chart options for week and month
+const chartOptions = ref({
+  chart: {
+    type: 'pie',
+    height: 350,
+  },
+  labels: ['Happy', 'Sad', 'Neutral', 'Excited', 'Angry'],
+  responsive: [{
+    breakpoint: 480,
+    options: {
+      chart: {
+        width: 300
+      },
+      legend: {
+        position: 'bottom'
+      }
+    }
+  }]
+});
+
+
+// Update mood summaries for weekly and monthly data
+const updateMoodSummaries = () => {
+  const currentWeek = moment().week();
+  const currentMonth = moment().month();
+
+  // Group by week and month
+  const weeklyData = userMoods.value.filter(mood => moment(mood.date).week() === currentWeek);
+  const monthlyData = userMoods.value.filter(mood => moment(mood.date).month() === currentMonth);
+
+  weeklyMoodSummary.value = summarizeMoods(weeklyData);
+  monthlyMoodSummary.value = summarizeMoods(monthlyData);
+};
+
+// Helper function to summarize moods
+const summarizeMoods = (data) => {
+  const moodCounts = { happy: 0, sad: 0, neutral: 0, excited: 0, angry: 0 };
+
+  data.forEach(mood => {
+    if (moodCounts[mood.mood]) {
+      moodCounts[mood.mood] += 1;
+    }
+  });
+
+  return Object.values(moodCounts);
+};
 // Lifecycle hook: Fetch moods and update calendar on component mount
 onMounted(async () => {
   try {
