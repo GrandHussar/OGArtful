@@ -68,6 +68,7 @@ Route::post('/users/{user}/toggle', [FollowerController::class, 'toggle'])->name
 Route::get('/users/{user}/following', [FollowerController::class, 'fetchFollowingUsers']);
 Route::post('/send-predefined-message', [ChatifyController::class, 'sendPredefinedMessage'])->name('send.predefined.message');
 Route::get('/users1', [ChatifyController::class, 'index1'])->name('users.index');
+Route::get('/users2', [DashboardController::class, 'index2'])->name('users.index2');
 Route::middleware(['auth'])->group(function () {
     Route::post('/upload', [CollageController::class, 'upload'])->name('upload');
     Route::post('/api/save-collage-json', [CollageController::class, 'saveCollageJson']);

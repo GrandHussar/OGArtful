@@ -7,6 +7,8 @@ use Inertia\Inertia;
 use Inertia\Response;
 use App\Models\Mood;
 use Illuminate\Support\Facades\Auth;
+use App\Models\User;
+
 class DashboardController extends Controller
 {
     public function index()
@@ -20,9 +22,26 @@ class DashboardController extends Controller
     /**
      * Fetch moods data for the authenticated user.
      */
-    public function getMoods()
+    public function index2()
     {
-        $moods = Mood::where('user_id', Auth::id())->get();
+        // Define the role name you're looking for
+        $roleName = 'user';
+
+        // Fetch users with the specified role
+        $users = User::whereHas('roles', function ($query) use ($roleName) {
+            $query->where('name', $roleName);
+        })->select('id', 'name')->get();
+
+        return response()->json($users);
+    }
+    public function getMoods(Request $request)
+    {
+        // Get the recipientId from the request, default to the logged-in user's ID if not provided
+        $recipientId = $request->query('recipientId', Auth::id());
+
+        // Fetch moods for the specified user
+        $moods = Mood::where('user_id', $recipientId)->get();
+
         return response()->json($moods);
     }
 
