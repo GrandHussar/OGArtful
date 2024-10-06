@@ -8,7 +8,7 @@
         <q-card class="welcome-card">
           <q-card-section>
             <h3 class="text-2xl font-bold mb-2">Hello,</h3>
-            <select v-model="recipientId"
+            <select v-model="clientId"   @change="fetchTherapySessionData(selectedUser)"
               class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none">
               <option disabled value="">Pick a client...</option>
               <option v-for="user in users" :key="user.id" :value="user.id">
@@ -91,29 +91,47 @@
 
       <!-- Right column content -->
       <div class="right-column">
-        <q-card class="progress-card">
-          <q-card-section>
-            <div class="progress-header">
-              <h3 class="text-lg font-semibold">Number of Sessions</h3>
-              <p class="text-4xl font-bold text-center">3</p>
-            </div>
-            <div class="progress-info">
-              <p class="text-lg font-semibold">Progress Level</p>
-              <p class="text-4xl font-bold text-green-500">92%</p>
-            </div>
-          </q-card-section>
-        </q-card>
+              <q-card class="progress-card">
+    <q-card-section>
+        <div class="progress-header">
+            <h3 class="text-lg font-semibold">Number of Sessions</h3>
+            <p v-if="sessionsDone === 0" class="text-center text-gray-500">No sessions yet</p>
+            <p v-else class="text-4xl font-bold text-center">{{ sessionsDone }} / {{ totalSessions }}</p>
+        </div>
+        <div class="progress-info">
+            <p class="text-lg font-semibold">Progress Level</p>
+            <!-- Progress bar -->
+            <q-linear-progress :value="progressLevel / 100" color="green" size="md" />
+        </div>
+    </q-card-section>
+</q-card>
 
-        <q-card class="assessment-card">
-          <q-card-section>
-            <h3 class="text-lg font-semibold mb-3">Assessment</h3>
-            <p>09/29/2024 8:00 PM</p>
-            <div class="assessment-content">
-              <p class="assessment-bar">[Assessment Content]</p>
+<div v-if="isTherapist">
+    <q-card class="update-session-card">
+        <q-card-section>
+            <h3 class="text-lg font-semibold mb-3">Update Sessions</h3>
+            <div class="mb-3">
+                <label class="text-md font-semibold">Sessions Done</label>
+                <input type="number" v-model="sessionsDone" min="0" />
             </div>
-          </q-card-section>
-        </q-card>
-      </div>
+            <div class="mb-3">
+                <label class="text-md font-semibold">Total Sessions</label>
+                <input type="number" v-model="totalSessions" min="1" />
+            </div>
+            <q-btn label="Update Sessions" @click="updateTherapySessions" />
+        </q-card-section>
+    </q-card>
+</div>
+                <q-card class="assessment-card">
+                    <q-card-section>
+                        <h3 class="text-lg font-semibold mb-3">Assessment</h3>
+                        <p>09/29/2024 8:00 PM</p>
+                        <div class="assessment-content">
+                            <p class="assessment-bar">[Assessment Content]</p>
+                        </div>
+                    </q-card-section>
+                </q-card>
+            </div>
     </div>
   </AuthenticatedLayout>
 </template>
@@ -149,6 +167,9 @@ const userMoods = ref([]);
 const calendarAttributes = ref([]);
 const errors = ref(null);
 const loading = ref(false);
+const sessionsDone = ref(0);
+const totalSessions = ref(0);
+const progressLevel = ref(0);
 const moodColors = {
   happy: 'green',
   sad: 'blue',
@@ -161,7 +182,27 @@ const form = useForm({
   date: '',
   mood: ''
 });
+const fetchTherapySessionData = async (userId = null) => {
+    try {
+        const response = await axios.get(`/therapy-sessions`, {
+            params: { user_id: userId }
+        });
+        const therapySession = response.data;
 
+        if (therapySession.message === 'No therapy session found') {
+            sessionsDone.value = 0;
+            totalSessions.value = 0;
+            progressLevel.value = 0;
+        } else {
+            sessionsDone.value = therapySession.sessions_done;
+            totalSessions.value = therapySession.total_sessions;
+            progressLevel.value = ((sessionsDone.value / totalSessions.value) * 100).toFixed(2);
+        }
+    } catch (error) {
+        console.error('Error fetching therapy session data:', error);
+        toast.error('Failed to fetch therapy session data.');
+    }
+};
 // Fetch moods from the backend
 const fetchMoods = async () => {
   loading.value = true;
