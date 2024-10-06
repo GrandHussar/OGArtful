@@ -8,7 +8,7 @@
         <q-card class="welcome-card">
           <q-card-section>
             <h3 class="text-2xl font-bold mb-2">Hello,</h3>
-            <select v-model="clientId"   @change="fetchTherapySessionData(selectedUser)"
+            <select v-model="clientId"   @change="fetchTherapySessionData(clientId)"
               class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none">
               <option disabled value="">Pick a client...</option>
               <option v-for="user in users" :key="user.id" :value="user.id">
@@ -144,15 +144,22 @@ import { Link, usePage, router } from "@inertiajs/vue3";
 import moment from 'moment';
 import ApexCharts from 'vue3-apexcharts';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-const RECIPIENT_ID_KEY = 'selectedRecipientId';
+const CLIENT_ID_KEY = 'selectedClientId';
 
-const recipientId = ref(localStorage.getItem(RECIPIENT_ID_KEY) || '');
+const clientId = ref(localStorage.getItem(CLIENT_ID_KEY) || '');
 // Initialize toast notifications
 const users = ref([]);
 const toast = useToast();
 const { auth } = usePage().props;
 const authUser = computed(() => auth.user || null);
 console.log("auth.user:", auth.user);
+const { props } = usePage();
+
+// Initialize toast notifications
+const roles = auth.user?.roles.map((role) => role.name) || [];
+
+console.log("role of user:", roles[0]);
+
 // Reactive references
 const selectedDate = ref(new Date().toISOString().substr(0, 10));
 const showPicker = ref(false);
@@ -207,15 +214,15 @@ const fetchTherapySessionData = async (userId = null) => {
 const fetchMoods = async () => {
   loading.value = true;
   
-  if (!recipientId.value) {
-    toast.error('Please select a recipient.');
+  if (!clientId.value) {
+    toast.error('Please select a client.');
     loading.value = false;
     return;
   }
   
   try {
     // Pass recipientId as a query parameter
-    const response = await axios.get(`/moods?recipientId=${recipientId.value}`);
+    const response = await axios.get(`/moods?clientId=${clientId.value}`);
     console.log('Fetched Moods:', response.data);
     
     if (Array.isArray(response.data)) {
@@ -233,9 +240,9 @@ updateCalendarAttributes();
     loading.value = false;
   }
 };
-watch(recipientId, async (newValue) => {
+watch(clientId, async (newValue) => {
   if (newValue) {
-    localStorage.setItem(RECIPIENT_ID_KEY, newValue); // Save to localStorage
+    localStorage.setItem(CLIENT_ID_KEY, newValue); // Save to localStorage
     await fetchMoods(); // Fetch moods for the selected recipient
   }
 });
@@ -320,7 +327,7 @@ const updateCalendarAttributes = () => {
     };
   });
 };
-const roles = auth.user?.roles.map((role) => role.name) || [];
+
 console.log("roles:", roles);
 const isTherapist = computed(() => {
   return roles.includes("therapist");
@@ -377,12 +384,47 @@ const summarizeMoods = (data) => {
   return Object.values(moodCounts);
 };
 // Lifecycle hook: Fetch moods and update calendar on component mount
+
+
+// Fetch all users for the therapist to select
+const fetchUserList = async () => {
+    try {
+        const response = await axios.get('/users');
+        users.value = response.data;
+    } catch (error) {
+        console.error('Error fetching user list:', error);
+    }
+};
+// Update session progress for the selected user (therapist only)
+const updateTherapySessions = async () => {
+    try {
+        await axios.post(`/therapy-sessions/${clientId.value}`, {
+            sessions_done: sessionsDone.value,
+            total_sessions: totalSessions.value
+        });
+        toast.success('Therapy session updated successfully');
+    } catch (error) {
+        console.error('Error updating therapy session data:', error);
+        toast.error('Failed to update therapy session.');
+    }
+};
+
+
+
+
 onMounted(async () => {
   try {
     await axios.get('/sanctum/csrf-cookie'); // Ensure CSRF cookie is set
-    await fetchMoods();
-    await fetchUsers();
-    updateCalendarAttributes();
+    await fetchMoods(); // Fetch moods
+    updateCalendarAttributes(); // Update calendar attributes for moods
+
+    if (isTherapist.value) {
+      // Fetch list of users if the logged-in user is a therapist
+      await fetchUserList();
+    } else {
+      // Fetch therapy session data for the current logged-in user
+      await fetchTherapySessionData();
+    }
   } catch (error) {
     console.error('Error during initial setup:', error);
     toast.error('Failed to initialize application.');

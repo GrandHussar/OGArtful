@@ -37,10 +37,10 @@ class DashboardController extends Controller
     public function getMoods(Request $request)
     {
         // Get the recipientId from the request, default to the logged-in user's ID if not provided
-        $recipientId = $request->query('recipientId', Auth::id());
+        $clientId = $request->query('clientId', Auth::id());
 
         // Fetch moods for the specified user
-        $moods = Mood::where('user_id', $recipientId)->get();
+        $moods = Mood::where('user_id', $clientId)->get();
 
         return response()->json($moods);
     }
