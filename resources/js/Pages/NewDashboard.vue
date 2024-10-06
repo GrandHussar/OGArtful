@@ -90,41 +90,41 @@
             <!-- Right column content -->
             <div class="right-column">
               <q-card class="progress-card">
+    <q-card-section>
+        <div class="progress-header">
+            <h3 class="text-lg font-semibold">Number of Sessions</h3>
+            <p v-if="sessionsDone === 0" class="text-center text-gray-500">No sessions yet</p>
+            <p v-else class="text-4xl font-bold text-center">{{ sessionsDone }} / {{ totalSessions }}</p>
+        </div>
+        <div class="progress-info">
+            <p class="text-lg font-semibold">Progress Level</p>
+            <!-- Progress bar -->
+            <q-linear-progress :value="progressLevel / 100" color="green" size="md" />
+        </div>
+    </q-card-section>
+</q-card>
+
+<div v-if="isTherapist">
+    <q-card class="update-session-card">
         <q-card-section>
-          <q-card-section>
-                        <div class="progress-header">
-                            <h3 class="text-lg font-semibold">Number of Sessions</h3>
-                            <p v-if="sessionsDone === 0" class="text-center text-gray-500">No sessions yet</p>
-                            <p v-else class="text-4xl font-bold text-center">{{ sessionsDone }} / {{ totalSessions }}</p>
-                        </div>
-                        <div class="progress-info">
-                            <p class="text-lg font-semibold">Progress Level</p>
-                            <p class="text-4xl font-bold text-green-500">{{ progressLevel }}%</p>
-                        </div>
-                    </q-card-section>
+            <h3 class="text-lg font-semibold mb-3">Select a User</h3>
+            <select v-model="selectedUser" @change="fetchTherapySessionData(selectedUser)">
+                <option v-for="user in userList" :key="user.id" :value="user.id">{{ user.name }}</option>
+            </select>
+
+            <h3 class="text-lg font-semibold mb-3">Update Sessions</h3>
+            <div class="mb-3">
+                <label class="text-md font-semibold">Sessions Done</label>
+                <input type="number" v-model="sessionsDone" min="0" />
+            </div>
+            <div class="mb-3">
+                <label class="text-md font-semibold">Total Sessions</label>
+                <input type="number" v-model="totalSessions" min="1" />
+            </div>
+            <q-btn label="Update Sessions" @click="updateTherapySessions" />
         </q-card-section>
     </q-card>
-    <div v-if="isTherapist">
-                    <q-card class="update-session-card">
-                        <q-card-section>
-                           <h3 class="text-lg font-semibold mb-3">Select a User</h3>
-                            <select v-model="selectedUser" @change="fetchTherapySessionData(selectedUser)">
-                                <option v-for="user in userList" :key="user.id" :value="user.id">{{ user.name }}</option>
-                            </select>
-                            <h3 class="text-lg font-semibold mb-3">Update Sessions</h3>
-                            <div class="mb-3">
-                                <label class="text-md font-semibold">Sessions Done</label>
-                                <input type="number" v-model="sessionsDone" min="0" />
-                            </div>
-                            <div class="mb-3">
-                                <label class="text-md font-semibold">Total Sessions</label>
-                                <input type="number" v-model="totalSessions" min="1" />
-                            </div>
-                            <q-btn label="Update Sessions" @click="updateTherapySessions" />
-                        </q-card-section>
-                    </q-card>
-                </div>
-
+</div>
                 <q-card class="assessment-card">
                     <q-card-section>
                         <h3 class="text-lg font-semibold mb-3">Assessment</h3>
@@ -139,16 +139,21 @@
     </AuthenticatedLayout>
 </template>
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref,computed, onMounted, watch } from 'vue';
 import { useForm } from '@inertiajs/inertia-vue3';
 import { useToast } from 'vue-toastification';
 import moment from 'moment';
 import ApexCharts from 'vue3-apexcharts';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-
+import { usePage } from '@inertiajs/vue3';
+const { props } = usePage();
+const { auth } = usePage().props;
+const authUser = ref(props.auth.user || {});
 // Initialize toast notifications
-const toast = useToast();
+const roles = auth.user?.roles.map((role) => role.name) || [];
 
+console.log("role of user:", roles[0]);
+const toast = useToast();
 // Reactive references
 const selectedDate = ref(new Date().toISOString().substr(0, 10));
 const showPicker = ref(false);
@@ -270,8 +275,11 @@ const updateCalendarAttributes = () => {
   });
 };
 const userRole = ref('therapist'); // Replace with actual user role
-const isTherapist = ref(userRole.value === 'therapist');
-
+const isTherapist = computed(() => {
+    console.log(roles.includes("therapist"));
+    return roles.includes("therapist");
+    
+});
 // Add data for mood summaries
 const weeklyMoodSummary = ref([]);
 const monthlyMoodSummary = ref([]);
@@ -325,12 +333,12 @@ const summarizeMoods = (data) => {
 // Lifecycle hook: Fetch moods and update calendar on component mount
 
 // Reactive references for therapy session data
-const selectedUser = ref(null); 
+const selectedUser = ref(null);
 const sessionsDone = ref(0);
 const totalSessions = ref(0);
 const progressLevel = ref(0);
+const userList = ref([]);
 
-const userList = ref([]); // Store all users for the therapist to select
 
 
 const fetchTherapySessionData = async (userId = null) => {
