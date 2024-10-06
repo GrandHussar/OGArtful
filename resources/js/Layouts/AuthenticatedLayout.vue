@@ -590,7 +590,9 @@ const isAdmin = computed(() => {
     return roles.some((role) => adminRoles.includes(role));
 });
 const isTherapist = computed(() => {
+    console.log(roles.includes("therapist"));
     return roles.includes("therapist");
+    
 });
 </script>
 
