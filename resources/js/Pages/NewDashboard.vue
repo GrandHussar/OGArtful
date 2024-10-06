@@ -5,6 +5,8 @@
         </template>
         <div class="dashboard-container py-12">
             <div class="main-content flex-1">
+
+
                 <q-card class="welcome-card">
                     <q-card-section>
                         <h3 class="text-2xl font-bold mb-2">Hello,</h3>
@@ -87,18 +89,41 @@
 
             <!-- Right column content -->
             <div class="right-column">
-                <q-card class="progress-card">
-                    <q-card-section>
+              <q-card class="progress-card">
+        <q-card-section>
+          <q-card-section>
                         <div class="progress-header">
                             <h3 class="text-lg font-semibold">Number of Sessions</h3>
-                            <p class="text-4xl font-bold text-center">3</p>
+                            <p v-if="sessionsDone === 0" class="text-center text-gray-500">No sessions yet</p>
+                            <p v-else class="text-4xl font-bold text-center">{{ sessionsDone }} / {{ totalSessions }}</p>
                         </div>
                         <div class="progress-info">
                             <p class="text-lg font-semibold">Progress Level</p>
-                            <p class="text-4xl font-bold text-green-500">92%</p>
+                            <p class="text-4xl font-bold text-green-500">{{ progressLevel }}%</p>
                         </div>
                     </q-card-section>
-                </q-card>
+        </q-card-section>
+    </q-card>
+    <div v-if="isTherapist">
+                    <q-card class="update-session-card">
+                        <q-card-section>
+                           <h3 class="text-lg font-semibold mb-3">Select a User</h3>
+                            <select v-model="selectedUser" @change="fetchTherapySessionData(selectedUser)">
+                                <option v-for="user in userList" :key="user.id" :value="user.id">{{ user.name }}</option>
+                            </select>
+                            <h3 class="text-lg font-semibold mb-3">Update Sessions</h3>
+                            <div class="mb-3">
+                                <label class="text-md font-semibold">Sessions Done</label>
+                                <input type="number" v-model="sessionsDone" min="0" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="text-md font-semibold">Total Sessions</label>
+                                <input type="number" v-model="totalSessions" min="1" />
+                            </div>
+                            <q-btn label="Update Sessions" @click="updateTherapySessions" />
+                        </q-card-section>
+                    </q-card>
+                </div>
 
                 <q-card class="assessment-card">
                     <q-card-section>
@@ -298,11 +323,78 @@ const summarizeMoods = (data) => {
   return Object.values(moodCounts);
 };
 // Lifecycle hook: Fetch moods and update calendar on component mount
+
+// Reactive references for therapy session data
+const selectedUser = ref(null); 
+const sessionsDone = ref(0);
+const totalSessions = ref(0);
+const progressLevel = ref(0);
+
+const userList = ref([]); // Store all users for the therapist to select
+
+
+const fetchTherapySessionData = async (userId = null) => {
+    try {
+        const response = await axios.get(`/therapy-sessions`, {
+            params: { user_id: userId }
+        });
+        const therapySession = response.data;
+
+        if (therapySession.message === 'No therapy session found') {
+            sessionsDone.value = 0;
+            totalSessions.value = 0;
+            progressLevel.value = 0;
+        } else {
+            sessionsDone.value = therapySession.sessions_done;
+            totalSessions.value = therapySession.total_sessions;
+            progressLevel.value = ((sessionsDone.value / totalSessions.value) * 100).toFixed(2);
+        }
+    } catch (error) {
+        console.error('Error fetching therapy session data:', error);
+        toast.error('Failed to fetch therapy session data.');
+    }
+};
+
+
+// Fetch all users for the therapist to select
+const fetchUserList = async () => {
+    try {
+        const response = await axios.get('/users');
+        userList.value = response.data;
+    } catch (error) {
+        console.error('Error fetching user list:', error);
+    }
+};
+// Update session progress for the selected user (therapist only)
+const updateTherapySessions = async () => {
+    try {
+        await axios.post(`/therapy-sessions/${selectedUser.value}`, {
+            sessions_done: sessionsDone.value,
+            total_sessions: totalSessions.value
+        });
+        toast.success('Therapy session updated successfully');
+    } catch (error) {
+        console.error('Error updating therapy session data:', error);
+        toast.error('Failed to update therapy session.');
+    }
+};
+
+
+
+
 onMounted(async () => {
   try {
     await axios.get('/sanctum/csrf-cookie'); // Ensure CSRF cookie is set
-    await fetchMoods();
-    updateCalendarAttributes();
+    await fetchMoods(); // Fetch moods
+    updateCalendarAttributes(); // Update calendar attributes for moods
+
+    if (isTherapist.value) {
+      // Fetch list of users if the logged-in user is a therapist
+      await fetchUserList();
+    } else {
+      // Fetch therapy session data for the current logged-in user
+      await fetchTherapySessionData();
+    }
   } catch (error) {
     console.error('Error during initial setup:', error);
     toast.error('Failed to initialize application.');

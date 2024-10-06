@@ -148,6 +148,12 @@ class RegisteredUserController extends Controller
             'users' => $users,
         ]);
     }
+    public function indexTherapist()
+    {
+        $users = User::all(); // Or add filtering logic if needed
+        return response()->json($users);
+    }
+
 
     /**
      * Update user details.
