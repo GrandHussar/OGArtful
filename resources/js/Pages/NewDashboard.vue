@@ -227,7 +227,7 @@ const fetchMoods = async () => {
     
     if (Array.isArray(response.data)) {
       userMoods.value = response.data;
-updateCalendarAttributes();
+      updateCalendarAttributes();
       updateMoodSummaries();
     } else {
       console.error('Unexpected response format:', response.data);
@@ -245,6 +245,10 @@ watch(clientId, async (newValue) => {
     localStorage.setItem(CLIENT_ID_KEY, newValue); // Save to localStorage
     await fetchMoods(); // Fetch moods for the selected recipient
   }
+});
+
+watch(userMoods, () => {
+  updateMoodSummaries();
 });
 const fetchUsers = async () => {
   try {
@@ -357,32 +361,39 @@ const chartOptions = ref({
   }]
 });
 
-
 // Update mood summaries for weekly and monthly data
 const updateMoodSummaries = () => {
-  const currentWeek = moment().week();
-  const currentMonth = moment().month();
+  const currentWeek = moment().week();    // Current week of the year
+  const currentMonth = moment().month();  // Current month (zero-indexed)
+
+  // Debugging output
+  console.log('userMoods.value:', userMoods.value);
+  console.log('Current Week:', currentWeek);
+  console.log('Current Month:', currentMonth + 1); // Add 1 to match human-readable months
 
   // Group by week and month
   const weeklyData = userMoods.value.filter(mood => moment(mood.date).week() === currentWeek);
   const monthlyData = userMoods.value.filter(mood => moment(mood.date).month() === currentMonth);
 
+  // Summarize moods
   weeklyMoodSummary.value = summarizeMoods(weeklyData);
   monthlyMoodSummary.value = summarizeMoods(monthlyData);
 };
+
 
 // Helper function to summarize moods
 const summarizeMoods = (data) => {
   const moodCounts = { happy: 0, sad: 0, neutral: 0, excited: 0, angry: 0 };
 
   data.forEach(mood => {
-    if (moodCounts[mood.mood]) {
+    if (moodCounts[mood.mood] !== undefined) {
       moodCounts[mood.mood] += 1;
     }
   });
 
-  return Object.values(moodCounts);
+  return Object.values(moodCounts); // Returns an array like [happyCount, sadCount, neutralCount, excitedCount, angryCount]
 };
+
 // Lifecycle hook: Fetch moods and update calendar on component mount
 
 
@@ -408,10 +419,6 @@ const updateTherapySessions = async () => {
         toast.error('Failed to update therapy session.');
     }
 };
-
-
-
-
 onMounted(async () => {
   try {
     await axios.get('/sanctum/csrf-cookie'); // Ensure CSRF cookie is set
@@ -430,7 +437,8 @@ onMounted(async () => {
     toast.error('Failed to initialize application.');
   }
 });
-
+console.log('Weekly Mood Summary:', weeklyMoodSummary.value);
+console.log('Monthly Mood Summary:', monthlyMoodSummary.value);
 </script>
 
 
