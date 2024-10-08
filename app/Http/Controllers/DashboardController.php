@@ -8,6 +8,7 @@ use Inertia\Response;
 use App\Models\Mood;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use App\Models\Assessment;
 
 class DashboardController extends Controller
 {
@@ -19,9 +20,50 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function getAssessment(Request $request)
+    {
+        $userId = $request->input('user_id');
+        
+        $assessment = Assessment::where('user_id', $userId)
+            ->with('therapist')  // Assuming therapist relationship is defined in Assessment model
+            ->first();
+
+        if ($assessment) {
+            return response()->json([
+                'comment' => $assessment->comment,
+                'therapist_name' => $assessment->therapist->name ?? 'No therapist assigned',
+            ]);
+        } else {
+            return response()->json(['message' => 'No assessment found'], 404);
+        }
+    }
+    
+    
+    
+    public function storeAssessment(Request $request)
+    {
+        // Validate the incoming data
+        $request->validate([
+            'comment' => 'required|string',
+            'client_id' => 'required|exists:users,id',
+        ]);
+
+        // Create a new assessment
+        $assessment = new Assessment();
+        $assessment->user_id = $request->client_id; // This is the client (user being assessed)
+        $assessment->therapist_id = auth()->user()->id; // Assign the therapist (currently logged-in user)
+        $assessment->comment = $request->input('comment');
+        $assessment->save();
+
+        return redirect()->back()->with('success', 'Assessment submitted successfully.');
+    }
+    
+    
+
     /**
      * Fetch moods data for the authenticated user.
      */
+    
     public function index2()
     {
         // Define the role name you're looking for
