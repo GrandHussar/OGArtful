@@ -26,6 +26,9 @@ use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\TherapySessionController;
 
+Route::get('/assessment', [DashboardController::class, 'getAssessment']);
+Route::post('/assessment', [DashboardController::class, 'storeAssessment']);
+
 Auth::routes(['verify' => true]);
 Broadcast::routes(['middleware' => ['auth:api']]);
 

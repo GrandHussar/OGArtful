@@ -8,13 +8,18 @@
         <q-card class="welcome-card">
           <q-card-section>
             <h3 class="text-2xl font-bold mb-2">Hello,</h3>
-            <select v-model="clientId"   @change="fetchTherapySessionData(clientId)"
-              class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none">
-              <option disabled value="">Pick a client...</option>
-              <option v-for="user in users" :key="user.id" :value="user.id">
-                {{ user.name }}
-              </option>
-            </select>
+            <template v-if="isTherapist">
+              <select v-model="clientId" @change="fetchTherapySessionData(clientId)"
+                class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none">
+                <option disabled value="">Pick a client...</option>
+                <option v-for="user in users" :key="user.id" :value="user.id">
+                  {{ user.name }}
+                </option>
+              </select>
+            </template>
+            <template v-else>
+              <p>Welcome back, {{ authUser.name }}.</p>
+            </template>
           </q-card-section>
         </q-card>
 
@@ -122,15 +127,33 @@
         </q-card-section>
     </q-card>
 </div>
-                <q-card class="assessment-card">
-                    <q-card-section>
-                        <h3 class="text-lg font-semibold mb-3">Assessment</h3>
-                        <p>09/29/2024 8:00 PM</p>
-                        <div class="assessment-content">
-                            <p class="assessment-bar">[Assessment Content]</p>
-                        </div>
-                    </q-card-section>
-                </q-card>
+<q-card class="assessment-card">
+  <q-card-section>
+    <h3 class="text-lg font-semibold mb-3">Assessment</h3>
+    <!-- For Therapist -->
+    <div v-if="isTherapist">
+      <textarea
+        v-model="assessmentComment"
+        rows="4"
+        class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholder="Leave an assessment comment..."
+      ></textarea>
+      <q-btn label="Submit Assessment" @click="submitAssessment" class="mt-2" />
+    </div>
+    <!-- For Users: Show Therapist's Comment and Name -->
+    <div v-else>
+      <div v-if="assessmentComment" class="assessment-comment mt-2">
+        <p class="text-lg">{{ assessmentComment }}</p>
+        <p class="text-sm text-gray-500">Therapist: {{ therapistName }}</p> <!-- Display therapist's name -->
+      </div>
+      <div v-else class="text-gray-500">
+        <p>No assessment comments yet.</p>
+      </div>
+    </div>
+  </q-card-section>
+</q-card>
+
+
             </div>
     </div>
   </AuthenticatedLayout>
@@ -146,10 +169,14 @@ import ApexCharts from 'vue3-apexcharts';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 const CLIENT_ID_KEY = 'selectedClientId';
 
-const clientId = ref(localStorage.getItem(CLIENT_ID_KEY) || '');
+
 // Initialize toast notifications
 const users = ref([]);
 const toast = useToast();
+const assessmentComment = ref('');
+const therapistName = ref('');
+
+
 const { auth } = usePage().props;
 const authUser = computed(() => auth.user || null);
 console.log("auth.user:", auth.user);
@@ -189,27 +216,60 @@ const form = useForm({
   date: '',
   mood: ''
 });
-const fetchTherapySessionData = async (userId = null) => {
-    try {
-        const response = await axios.get(`/therapy-sessions`, {
-            params: { user_id: userId }
-        });
-        const therapySession = response.data;
+const isTherapist = computed(() => {
+  return roles.includes("therapist");
+});
 
-        if (therapySession.message === 'No therapy session found') {
-            sessionsDone.value = 0;
-            totalSessions.value = 0;
-            progressLevel.value = 0;
-        } else {
-            sessionsDone.value = therapySession.sessions_done;
-            totalSessions.value = therapySession.total_sessions;
-            progressLevel.value = ((sessionsDone.value / totalSessions.value) * 100).toFixed(2);
-        }
-    } catch (error) {
-        console.error('Error fetching therapy session data:', error);
-        toast.error('Failed to fetch therapy session data.');
-    }
+const clientId = ref(isTherapist.value ? localStorage.getItem(CLIENT_ID_KEY) || '' : authUser.value.id);
+
+const fetchAssessmentComment = async () => {
+  try {
+    const response = await axios.get(`/assessment`, {
+      params: { user_id: clientId.value || authUser.value.id },
+    });
+    assessmentComment.value = response.data.comment;
+    therapistName.value = response.data.therapist_name;  // Store therapist's name
+  } catch (error) {
+    console.error('Error fetching assessment comment:', error);
+    toast.error('Failed to load assessment comment.');
+  }
 };
+const submitAssessment = async () => {
+  try {
+    console.log('Submitting assessment comment:', assessmentComment.value);  // Log the comment
+    await axios.post(`/assessment`, {
+      user_id: clientId.value,
+      comment: assessmentComment.value,
+    });
+    toast.success('Assessment submitted successfully');
+  } catch (error) {
+    console.error('Error submitting assessment:', error);
+    toast.error('Failed to submit assessment.');
+  }
+};
+
+const fetchTherapySessionData = async (userId = null) => {
+  try {
+    const response = await axios.get(`/therapy-sessions`, {
+      params: { user_id: userId || authUser.value.id }  // Default to logged-in user's ID
+    });
+    const therapySession = response.data;
+
+    if (therapySession.message === 'No therapy session found') {
+      sessionsDone.value = 0;
+      totalSessions.value = 0;
+      progressLevel.value = 0;
+    } else {
+      sessionsDone.value = therapySession.sessions_done;
+      totalSessions.value = therapySession.total_sessions;
+      progressLevel.value = ((sessionsDone.value / totalSessions.value) * 100).toFixed(2);
+    }
+  } catch (error) {
+    console.error('Error fetching therapy session data:', error);
+    toast.error('Failed to fetch therapy session data.');
+  }
+};
+
 // Fetch moods from the backend
 const fetchMoods = async () => {
   loading.value = true;
@@ -244,12 +304,15 @@ watch(clientId, async (newValue) => {
   if (newValue) {
     localStorage.setItem(CLIENT_ID_KEY, newValue); // Save to localStorage
     await fetchMoods(); // Fetch moods for the selected recipient
+    await fetchAssessmentComment();
   }
 });
 
 watch(userMoods, () => {
   updateMoodSummaries();
 });
+
+
 const fetchUsers = async () => {
   try {
     const response = await axios.get('/users2');
@@ -333,9 +396,6 @@ const updateCalendarAttributes = () => {
 };
 
 console.log("roles:", roles);
-const isTherapist = computed(() => {
-  return roles.includes("therapist");
-});
 
 // Add data for mood summaries
 const weeklyMoodSummary = ref([]);
@@ -422,26 +482,27 @@ const updateTherapySessions = async () => {
 onMounted(async () => {
   try {
     await axios.get('/sanctum/csrf-cookie'); // Ensure CSRF cookie is set
-    await fetchMoods(); // Fetch moods
-    updateCalendarAttributes(); // Update calendar attributes for moods
 
     if (isTherapist.value) {
       // Fetch list of users if the logged-in user is a therapist
       await fetchUserList();
     } else {
       // Fetch therapy session data for the current logged-in user
-      await fetchTherapySessionData();
+      await fetchTherapySessionData(authUser.value.id);
+      await fetchAssessmentComment(authUser.value.id);
     }
+
+    await fetchMoods(); // Fetch moods
+    updateCalendarAttributes(); // Update calendar attributes for moods
   } catch (error) {
     console.error('Error during initial setup:', error);
     toast.error('Failed to initialize application.');
   }
 });
+
 console.log('Weekly Mood Summary:', weeklyMoodSummary.value);
 console.log('Monthly Mood Summary:', monthlyMoodSummary.value);
 </script>
-
-
 <style scoped>
 .dashboard-container {
   display: flex;
