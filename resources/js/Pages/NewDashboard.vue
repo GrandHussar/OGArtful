@@ -140,18 +140,21 @@
       ></textarea>
       <q-btn label="Submit Assessment" @click="submitAssessment" class="mt-2" />
     </div>
-    <!-- For Users: Show Therapist's Comment and Name -->
-    <div v-else>
-      <div v-if="assessmentComment" class="assessment-comment mt-2">
-        <p class="text-lg">{{ assessmentComment }}</p>
-        <p class="text-sm text-gray-500">Therapist: {{ therapistName }}</p> <!-- Display therapist's name -->
+
+    <!-- Scrollable Assessment List -->
+    <div class="assessment-list" v-if="assessments.length > 0">
+      <div v-for="(assessment, index) in assessments" :key="index" class="mb-4">
+        <p class="text-lg">{{ assessment.comment }}</p>
+        <p class="text-sm text-gray-500">Therapist: {{ assessment.therapist_name }}</p>
+        <p class="text-sm text-gray-500">Date: {{ assessment.created_at }}</p>
       </div>
-      <div v-else class="text-gray-500">
-        <p>No assessment comments yet.</p>
-      </div>
+    </div>
+    <div v-else class="text-gray-500">
+      <p>No assessment comments yet.</p>
     </div>
   </q-card-section>
 </q-card>
+
 
 
             </div>
@@ -221,33 +224,36 @@ const isTherapist = computed(() => {
 });
 
 const clientId = ref(isTherapist.value ? localStorage.getItem(CLIENT_ID_KEY) || '' : authUser.value.id);
+const assessments = ref([]);
+
 
 const fetchAssessmentComment = async () => {
   try {
     const response = await axios.get(`/assessment`, {
       params: { user_id: clientId.value || authUser.value.id },
     });
-    assessmentComment.value = response.data.comment;
-    therapistName.value = response.data.therapist_name;  // Store therapist's name
+    if (response.data.assessments) {
+      assessments.value = response.data.assessments;
+    }
   } catch (error) {
-    console.error('Error fetching assessment comment:', error);
-    toast.error('Failed to load assessment comment.');
+    console.error('Error fetching assessments:', error);
+    toast.error('Failed to load assessments.');
   }
 };
+
 const submitAssessment = async () => {
   try {
-    console.log('Submitting assessment comment:', assessmentComment.value);  // Log the comment
     await axios.post(`/assessment`, {
-      user_id: clientId.value,
+      client_id: clientId.value,  // Send the correct client ID
       comment: assessmentComment.value,
     });
     toast.success('Assessment submitted successfully');
+    fetchAssessmentComment();  // Fetch assessments again after submitting
   } catch (error) {
     console.error('Error submitting assessment:', error);
     toast.error('Failed to submit assessment.');
   }
 };
-
 const fetchTherapySessionData = async (userId = null) => {
   try {
     const response = await axios.get(`/therapy-sessions`, {
@@ -511,6 +517,11 @@ console.log('Monthly Mood Summary:', monthlyMoodSummary.value);
   /* Space between the main content and right column */
   padding: 50px 20px;
   /* Add padding to the container */
+}
+.assessment-list {
+  max-height: 200px;  /* Adjust the height based on your design */
+  overflow-y: auto;
+  padding-right: 10px; /* Space for the scrollbar */
 }
 
 .main-content {
