@@ -23,18 +23,23 @@ class DashboardController extends Controller
     public function getAssessment(Request $request)
     {
         $userId = $request->input('user_id');
-        
-        $assessment = Assessment::where('user_id', $userId)
-            ->with('therapist')  // Assuming therapist relationship is defined in Assessment model
-            ->first();
-
-        if ($assessment) {
+    
+        $assessments = Assessment::where('user_id', $userId)
+            ->with('therapist')  // Assuming therapist relationship is defined in the Assessment model
+            ->get();
+    
+        if ($assessments->isNotEmpty()) {
             return response()->json([
-                'comment' => $assessment->comment,
-                'therapist_name' => $assessment->therapist->name ?? 'No therapist assigned',
+                'assessments' => $assessments->map(function ($assessment) {
+                    return [
+                        'comment' => $assessment->comment,
+                        'therapist_name' => $assessment->therapist->name ?? 'No therapist assigned',
+                        'created_at' => $assessment->created_at->format('Y-m-d H:i:s'),  // Format the date and time
+                    ];
+                }),
             ]);
         } else {
-            return response()->json(['message' => 'No assessment found'], 404);
+            return response()->json(['message' => 'No assessments found'], 404);
         }
     }
     
