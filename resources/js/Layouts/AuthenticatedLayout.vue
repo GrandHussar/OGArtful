@@ -154,13 +154,13 @@
 
                     <!-- Guest view -->
                     <div v-else>
-                        <Link :href="route('login')">
-                            <q-btn flat rounded dense no-wrap color="black">
+                        <Link :href="route('login')" class="m-2">
+                            <q-btn unelevated rounded color="primary">
                                 Login
                             </q-btn>
                         </Link>
-                        <Link :href="route('register')">
-                            <q-btn flat rounded dense no-wrap color="black">
+                        <Link :href="route('register')" >
+                            <q-btn unelevated rounded color="primary">
                                 Register
                             </q-btn>
                         </Link>

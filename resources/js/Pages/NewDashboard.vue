@@ -7,8 +7,8 @@
       <div class="main-content flex-1">
         <q-card class="welcome-card">
           <q-card-section>
-            <h3 class="text-2xl font-bold mb-2">Hello,</h3>
             <template v-if="isTherapist">
+              <h3 class="text-2xl font-bold mb-2">Welcome Back, {{ authUser.name }}</h3>
               <select v-model="clientId" @change="fetchTherapySessionData(clientId)"
                 class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none">
                 <option disabled value="">Pick a client...</option>
@@ -18,7 +18,7 @@
               </select>
             </template>
             <template v-else>
-              <p>Welcome back, {{ authUser.name }}.</p>
+              <h3 class="text-2xl font-bold mb-2">Welcome Back, {{ authUser.name }}</h3>
             </template>
           </q-card-section>
         </q-card>
@@ -26,18 +26,18 @@
         <q-card class="feelings-tracker-card">
           <q-card-section>
             <template v-if="isTherapist">
-            <h3 class="text-lg font-semibold mb-3">Feelings Tracker for </h3>
-            <p class="text-sm">The client's calendar</p>
-            </template>  
+              <h3 class="text-lg font-semibold mb-3">Feelings Tracker for </h3>
+              <p class="text-sm">The client's calendar</p>
+            </template>
             <template v-else>
-            <h3 class="text-lg font-semibold mb-3">Feelings Tracker</h3>
-            <p class="text-sm">How are you feeling today?</p>
+              <h3 class="text-lg font-semibold mb-3">Feelings Tracker</h3>
+              <p class="text-sm">How are you feeling today?</p>
             </template>
             <v-calendar v-model="selectedDate" :attributes="calendarAttributes" expanded
               @dayclick="openMoodPicker"></v-calendar>
 
             <!-- Use q-dialog for the mood picker modal -->
-       
+
             <q-dialog v-model="showPicker">
               <q-card>
                 <q-card-section>
@@ -55,12 +55,12 @@
               </q-card>
             </q-dialog>
             <div v-if="isTherapist" class="mood-summary-section">
-              <q-card class="mood-summary-card">
+              <!-- <q-card class="mood-summary-card">
                 <q-card-section>
                   <h3 class="text-lg font-semibold mb-3">Weekly Mood Summary</h3>
                   <ApexCharts type="pie" :options="chartOptions" :series="weeklyMoodSummary" />
                 </q-card-section>
-              </q-card>
+              </q-card> -->
 
               <q-card class="mood-summary-card">
                 <q-card-section>
@@ -85,79 +85,113 @@
 
         <q-card class="announcement-card">
           <q-card-section>
-            <h3 class="text-lg font-semibold mb-3">Announcement</h3>
-            <ul class="announcements-list">
-              <li>*Pre-Survey Link*</li>
-              <li>*ZOOM LINK*</li>
+            <h3 class="text-lg font-semibold mb-3">Announcements</h3>
+
+            <!-- If the user is a therapist, display their own announcements -->
+            <template v-if="isTherapist">
+
+              <ul class="user-announcements-list">
+                <li v-for="announcement in userAnnouncements" :key="announcement.id" class="mb-4 update-session-card">
+                  <h5 class="text-md font-semibold">{{ announcement.title }}</h5>
+                  <p class="text-sm">{{ announcement.content }}</p>
+
+                  <!-- Edit and Delete Buttons -->
+                  <button @click="editAnnouncement(announcement)" class="text-blue-500 hover:underline">Edit</button>
+                  <button @click="deleteAnnouncement(announcement.id)"
+                    class="text-red-500 hover:underline ml-3">Delete</button>
+                </li>
+              </ul>
+
+              <!-- Announcement Form for Creating or Editing -->
+              <form @submit.prevent="submitAnnouncement">
+                <div class="mb-3">
+                  <label for="title" class="block text-sm font-medium text-gray-700">Title</label>
+                  <input type="text" id="title" v-model="announcementForm.title" required
+                    class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+
+                <div class="mb-3">
+                  <label for="content" class="block text-sm font-medium text-gray-700">Content</label>
+                  <textarea id="content" v-model="announcementForm.content" required rows="3"
+                    class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+
+                <q-btn label="Submit" type="submit" />
+              </form>
+            </template>
+            <template v-else>
+            <!-- Display All Announcements -->
+            <ul class="all-announcements-list">
+              <li v-for="announcement in allAnnouncements" :key="announcement.id" class="mb-4">
+                <h4 class="text-md font-semibold">{{ announcement.title }}</h4>
+                <p class="text-sm text-gray-500">By {{ announcement.therapist.name }} on {{
+                  formatDate(announcement.created_at) }}</p>
+                <p class="text-sm">{{ announcement.content }}</p>
+              </li>
             </ul>
+          </template>
           </q-card-section>
         </q-card>
       </div>
 
       <!-- Right column content -->
       <div class="right-column">
-              <q-card class="progress-card">
-    <q-card-section>
-        <div class="progress-header">
-            <h3 class="text-lg font-semibold">Number of Sessions</h3>
-            <p v-if="sessionsDone === 0" class="text-center text-gray-500">No sessions yet</p>
-            <p v-else class="text-4xl font-bold text-center">{{ sessionsDone }} / {{ totalSessions }}</p>
-        </div>
-        <div class="progress-info">
-            <p class="text-lg font-semibold">Progress Level</p>
-            <!-- Progress bar -->
-            <q-linear-progress :value="progressLevel / 100" color="green" size="md" />
-        </div>
-    </q-card-section>
-</q-card>
+        <q-card class="progress-card">
+          <q-card-section>
+            <div class="progress-header">
+              <h3 class="text-lg font-semibold">Number of Sessions</h3>
+              <p v-if="sessionsDone === 0" class="text-center text-gray-500">No sessions yet</p>
+              <p v-else class="text-4xl font-bold text-center">{{ sessionsDone }} / {{ totalSessions }}</p>
+            </div>
+            <div class="progress-info">
+              <p class="text-lg font-semibold">Progress Level</p>
+              <!-- Progress bar -->
+              <q-linear-progress :value="progressLevel / 100" color="green" size="md" />
+            </div>
+          </q-card-section>
+        </q-card>
 
-<div v-if="isTherapist">
-    <q-card class="update-session-card">
-        <q-card-section>
-            <h3 class="text-lg font-semibold mb-3">Update Sessions</h3>
-            <div class="mb-3">
-                <label class="text-md font-semibold">Sessions Done</label>
+        <div v-if="isTherapist">
+          <q-card class="update-session-card">
+            <q-card-section>
+              <h3 class="text-lg font-semibold mb-3">Update Sessions</h3>
+              <div class="mb-3">
+                <label class="text-md font-semibold">Sessions Done: </label>
                 <input type="number" v-model="sessionsDone" min="0" />
-            </div>
-            <div class="mb-3">
-                <label class="text-md font-semibold">Total Sessions</label>
+              </div>
+              <div class="mb-3">
+                <label class="text-md font-semibold">Total Sessions: </label>
                 <input type="number" v-model="totalSessions" min="1" />
+              </div>
+              <q-btn label="Update Sessions" @click="updateTherapySessions" />
+            </q-card-section>
+          </q-card>
+        </div>
+        <q-card class="assessment-card">
+          <q-card-section>
+            <h3 class="text-lg font-semibold mb-3">Assessment</h3>
+            <!-- For Therapist -->
+            <div v-if="isTherapist">
+              <textarea v-model="assessmentComment" rows="4"
+                class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Leave an assessment comment..."></textarea>
+              <q-btn label="Submit Assessment" @click="submitAssessment" class="mt-2 mb-5" />
             </div>
-            <q-btn label="Update Sessions" @click="updateTherapySessions" />
-        </q-card-section>
-    </q-card>
-</div>
-<q-card class="assessment-card">
-  <q-card-section>
-    <h3 class="text-lg font-semibold mb-3">Assessment</h3>
-    <!-- For Therapist -->
-    <div v-if="isTherapist">
-      <textarea
-        v-model="assessmentComment"
-        rows="4"
-        class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        placeholder="Leave an assessment comment..."
-      ></textarea>
-      <q-btn label="Submit Assessment" @click="submitAssessment" class="mt-2" />
-    </div>
 
-    <!-- Scrollable Assessment List -->
-    <div class="assessment-list" v-if="assessments.length > 0">
-      <div v-for="(assessment, index) in assessments" :key="index" class="mb-4">
-        <p class="text-lg">{{ assessment.comment }}</p>
-        <p class="text-sm text-gray-500">Therapist: {{ assessment.therapist_name }}</p>
-        <p class="text-sm text-gray-500">Date: {{ assessment.created_at }}</p>
+            <!-- Scrollable Assessment List -->
+            <div class="assessment-list" v-if="assessments.length > 0">
+              <div v-for="(assessment, index) in assessments" :key="index" class="mb-4">
+                <p class="text-lg">{{ assessment.comment }}</p>
+                <p class="text-sm text-gray-500">Therapist: {{ assessment.therapist_name }}</p>
+                <p class="text-sm text-gray-500">Date: {{ assessment.created_at }}</p>
+              </div>
+            </div>
+            <div v-else class="text-gray-500">
+              <p>No assessment comments yet.</p>
+            </div>
+          </q-card-section>
+        </q-card>
       </div>
-    </div>
-    <div v-else class="text-gray-500">
-      <p>No assessment comments yet.</p>
-    </div>
-  </q-card-section>
-</q-card>
-
-
-
-            </div>
     </div>
   </AuthenticatedLayout>
 </template>
@@ -178,8 +212,9 @@ const users = ref([]);
 const toast = useToast();
 const assessmentComment = ref('');
 const therapistName = ref('');
-
-
+const announcementForm = ref({ title: '', content: '' });
+const allAnnouncements = ref([]);
+const userAnnouncements = ref([]);
 const { auth } = usePage().props;
 const authUser = computed(() => auth.user || null);
 console.log("auth.user:", auth.user);
@@ -208,11 +243,11 @@ const sessionsDone = ref(0);
 const totalSessions = ref(0);
 const progressLevel = ref(0);
 const moodColors = {
-  happy: 'green',
-  sad: 'blue',
-  neutral: 'orange',
-  excited: 'yellow',
-  angry: 'red',
+  happy: 'blue',
+  sad: 'green',
+  neutral: 'yellow',
+  excited: 'red',
+  angry: 'purple',
 };
 // Create a form instance
 const form = useForm({
@@ -226,21 +261,92 @@ const isTherapist = computed(() => {
 const clientId = ref(isTherapist.value ? localStorage.getItem(CLIENT_ID_KEY) || '' : authUser.value.id);
 const assessments = ref([]);
 
+const fetchAnnouncements = async () => {
+   try {
+     const response = await axios.get('/announcements');
+     console.log("Announcements response:", response.data); // Add this to check the structure
+     if (response.data) {
+       allAnnouncements.value = response.data.allAnnouncements || [];
+       userAnnouncements.value = response.data.userAnnouncements || [];
+     }
+   } catch (error) {
+     console.error('Error fetching announcements:', error);
+     toast.error('Failed to load announcements.');
+   }
+ };
+
+// Submit a new announcement (therapist only)
+const submitAnnouncement = async () => {
+  try {
+    if (announcementForm.value.id) {
+      // Update announcement
+      await axios.put(`/announcements/${announcementForm.value.id}`, {
+        title: announcementForm.value.title,
+        content: announcementForm.value.content,
+      });
+      toast.success('Announcement updated successfully!');
+    } else {
+      // Create new announcement
+      await axios.post('/announcements', {
+        title: announcementForm.value.title,
+        content: announcementForm.value.content,
+      });
+      toast.success('Announcement posted successfully!');
+    }
+
+    // Reset form and fetch announcements
+    resetForm();
+    fetchAnnouncements();
+  } catch (error) {
+    console.error('Error posting announcement:', error);
+    toast.error('Failed to submit announcement.');
+  }
+};
+
+// Edit an announcement
+const editAnnouncement = (announcement) => {
+  announcementForm.value.id = announcement.id;
+  announcementForm.value.title = announcement.title;
+  announcementForm.value.content = announcement.content;
+};
+
+// Delete an announcement
+const deleteAnnouncement = async (id) => {
+  try {
+    await axios.delete(`/announcements/${id}`);
+    toast.success('Announcement deleted successfully!');
+    fetchAnnouncements();
+  } catch (error) {
+    console.error('Error deleting announcement:', error);
+    toast.error('Failed to delete announcement.');
+  }
+};
+
+// Reset the form
+const resetForm = () => {
+  announcementForm.value.id = null;
+  announcementForm.value.title = '';
+  announcementForm.value.content = '';
+};
 
 const fetchAssessmentComment = async () => {
   try {
     const response = await axios.get(`/assessment`, {
       params: { user_id: clientId.value || authUser.value.id },
     });
-    if (response.data.assessments) {
+
+    // Check if assessments exist
+    if (response.data.assessments && response.data.assessments.length > 0) {
       assessments.value = response.data.assessments;
+    } else {
+      assessments.value = []; // Clear assessments or handle empty state
+      toast.info(response.data.message || 'No assessments available.');
     }
   } catch (error) {
     console.error('Error fetching assessments:', error);
     toast.error('Failed to load assessments.');
   }
 };
-
 const submitAssessment = async () => {
   try {
     await axios.post(`/assessment`, {
@@ -279,18 +385,18 @@ const fetchTherapySessionData = async (userId = null) => {
 // Fetch moods from the backend
 const fetchMoods = async () => {
   loading.value = true;
-  
+
   if (!clientId.value) {
     toast.error('Please select a client.');
     loading.value = false;
     return;
   }
-  
+
   try {
     // Pass recipientId as a query parameter
     const response = await axios.get(`/moods?clientId=${clientId.value}`);
     console.log('Fetched Moods:', response.data);
-    
+
     if (Array.isArray(response.data)) {
       userMoods.value = response.data;
       updateCalendarAttributes();
@@ -465,26 +571,31 @@ const summarizeMoods = (data) => {
 
 // Fetch all users for the therapist to select
 const fetchUserList = async () => {
-    try {
-        const response = await axios.get('/users');
-        users.value = response.data;
-    } catch (error) {
-        console.error('Error fetching user list:', error);
-    }
+  try {
+    const response = await axios.get('/users');
+    users.value = response.data;
+  } catch (error) {
+    console.error('Error fetching user list:', error);
+  }
 };
 // Update session progress for the selected user (therapist only)
 const updateTherapySessions = async () => {
-    try {
-        await axios.post(`/therapy-sessions/${clientId.value}`, {
-            sessions_done: sessionsDone.value,
-            total_sessions: totalSessions.value
-        });
-        toast.success('Therapy session updated successfully');
-    } catch (error) {
-        console.error('Error updating therapy session data:', error);
-        toast.error('Failed to update therapy session.');
-    }
+  try {
+    await axios.post(`/therapy-sessions/${clientId.value}`, {
+      sessions_done: sessionsDone.value,
+      total_sessions: totalSessions.value
+    });
+    toast.success('Therapy session updated successfully');
+  } catch (error) {
+    console.error('Error updating therapy session data:', error);
+    toast.error('Failed to update therapy session.');
+  }
 };
+
+const formatDate = (dateString) => {
+  return new Date(dateString).toLocaleDateString();
+};
+
 onMounted(async () => {
   try {
     await axios.get('/sanctum/csrf-cookie'); // Ensure CSRF cookie is set
@@ -492,10 +603,12 @@ onMounted(async () => {
     if (isTherapist.value) {
       // Fetch list of users if the logged-in user is a therapist
       await fetchUserList();
+      await fetchAnnouncements();
     } else {
       // Fetch therapy session data for the current logged-in user
       await fetchTherapySessionData(authUser.value.id);
       await fetchAssessmentComment(authUser.value.id);
+      await fetchAnnouncements();
     }
 
     await fetchMoods(); // Fetch moods
@@ -510,6 +623,15 @@ console.log('Weekly Mood Summary:', weeklyMoodSummary.value);
 console.log('Monthly Mood Summary:', monthlyMoodSummary.value);
 </script>
 <style scoped>
+.update-session-card {
+  margin-bottom: 20px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 15px;
+  background-color: #ffffff;
+}
+
 .dashboard-container {
   display: flex;
   justify-content: center;
@@ -518,10 +640,13 @@ console.log('Monthly Mood Summary:', monthlyMoodSummary.value);
   padding: 50px 20px;
   /* Add padding to the container */
 }
+
 .assessment-list {
-  max-height: 200px;  /* Adjust the height based on your design */
+  max-height: 200px;
+  /* Adjust the height based on your design */
   overflow-y: auto;
-  padding-right: 10px; /* Space for the scrollbar */
+  padding-right: 10px;
+  /* Space for the scrollbar */
 }
 
 .main-content {

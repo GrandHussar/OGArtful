@@ -1,5 +1,5 @@
 <template>
-  <AuthenticadeLayout>
+  <AuthenticatedLayout>
   <div class="min-h-screen flex items-center justify-center py-10">
     <div class="bg-white shadow-lg rounded-lg p-6 w-full max-w-2xl">
       <h1 class="text-2xl font-semibold mb-6 text-center text-gray-700">Edit Site Settings</h1>
@@ -80,7 +80,7 @@
       </form>
     </div>
   </div>
-</AuthenticadeLayout>
+</AuthenticatedLayout>
 </template>
 
 <script setup>
