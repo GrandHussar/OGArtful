@@ -9,7 +9,8 @@ use App\Models\Mood;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Models\Assessment;
-
+use App\Models\Announcement;
+use Illuminate\Support\Facades\Log;
 class DashboardController extends Controller
 {
     public function index()
@@ -20,6 +21,64 @@ class DashboardController extends Controller
         ]);
     }
 
+
+    public function storeAnnouncement(Request $request)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+        ]);
+
+        Announcement::create([
+            'therapist_id' => Auth::id(), // The currently authenticated therapist
+            'title' => $request->title,
+            'content' => $request->content,
+        ]);
+
+        return response()->json(['message' => 'Announcement created successfully!'], 201);
+    }
+
+    // Method to get all announcements
+    public function getAnnouncement() 
+    {
+        $allAnnouncements = Announcement::with('therapist')->orderBy('created_at', 'desc')->get();
+        $userAnnouncements = Announcement::where('therapist_id', Auth::id())->get();
+    
+        // Log the queries/data for debugging
+        \Log::info('All Announcements:', $allAnnouncements->toArray());
+        \Log::info('User Announcements:', $userAnnouncements->toArray());
+    
+        if ($allAnnouncements->isNotEmpty()) {
+            return response()->json([
+                'allAnnouncements' => $allAnnouncements,
+                'userAnnouncements' => $userAnnouncements,
+            ]);
+        } else {
+            return response()->json([
+                'announcements' => [], // Returning an empty array
+                'message' => 'No announcements found',
+            ], 200);
+        }
+    }
+    public function updateAnnouncement(Request $request, Announcement $announcement)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+        ]);
+
+        $announcement->update([
+            'title' => $request->title,
+            'content' => $request->content,
+        ]);
+
+    return response()->json(['message' => 'Announcement updated successfully!']);
+    }
+    public function destroyAnnouncement(Announcement $announcement)
+    {
+        $announcement->delete();
+        return response()->json(['message' => 'Announcement deleted successfully!']);
+    }
     public function getAssessment(Request $request)
     {
         $userId = $request->input('user_id');
@@ -39,7 +98,11 @@ class DashboardController extends Controller
                 }),
             ]);
         } else {
-            return response()->json(['message' => 'No assessments found'], 404);
+            // Return a 200 status with a message instead of a 404 error
+            return response()->json([
+                'assessments' => [], // Returning an empty array
+                'message' => 'No assessments found',
+            ], 200);
         }
     }
     

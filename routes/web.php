@@ -73,6 +73,8 @@ Route::get('/users/{user}/following', [FollowerController::class, 'fetchFollowin
 Route::post('/send-predefined-message', [ChatifyController::class, 'sendPredefinedMessage'])->name('send.predefined.message');
 Route::get('/users1', [ChatifyController::class, 'index1'])->name('users.index');
 Route::get('/users2', [DashboardController::class, 'index2'])->name('users.index2');
+
+
 Route::middleware(['auth'])->group(function () {
     Route::post('/upload', [CollageController::class, 'upload'])->name('upload');
     Route::post('/api/save-collage-json', [CollageController::class, 'saveCollageJson']);
@@ -87,7 +89,12 @@ Route::middleware(['auth', CheckRestriction::class])->group(function () {
 
     Route::get('/therapy-sessions', [TherapySessionController::class, 'index'])->name('therapy-sessions.index');
     Route::post('/therapy-sessions/{id}', [TherapySessionController::class, 'update'])->name('therapy-sessions.update');
-    
+
+    Route::post('/announcements', [DashboardController::class, 'storeAnnouncement']);
+    Route::get('/announcements', [DashboardController::class, 'getAnnouncement']);
+    Route::put('/announcements/{announcement}', [DashboardController::class, 'updateAnnouncement']);
+    Route::delete('/announcements/{announcement}', [DashboardController::class, 'destroyAnnouncement']);
+
     Route::get('/users', [RegisteredUserController::class, 'indexTherapist'])->name('users.index'); // Controller method to get all users
 
     Route::get('/draw', function () {
@@ -121,7 +128,7 @@ Route::middleware(['auth', CheckRestriction::class])->group(function () {
     Route::post('/post-share', [PostController::class, 'sharePost'])->name('post.sharePost');
     Route::get('/post-show/{post}', [PostController::class, 'showPost'])->name('post.showPost');
 
-   
+
     Route::get('/chat', function () {
         return Inertia::render('Chat/ChatPage');
     })->name('chat');

@@ -94,4 +94,8 @@ public function getFollowingsCount()
 {
     return $this->followings()->count();
 }
+public function announcements()
+{
+    return $this->hasMany(Announcement::class, 'therapist_id');
+}
 }
