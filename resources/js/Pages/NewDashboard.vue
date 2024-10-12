@@ -166,20 +166,45 @@
             <h3 class="text-lg font-semibold mb-3">Assessment</h3>
             <!-- For Therapist -->
             <div v-if="isTherapist">
-              <textarea v-model="assessmentComment" rows="4"
-                class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Leave an assessment comment..."></textarea>
-              <q-btn label="Submit Assessment" @click="submitAssessment" class="mt-2 mb-5" />
+              <q-btn label="Add New Assessment" @click="openModal()" class="mb-3" color="primary" />
+
+              <q-dialog v-model="showAssessmentModal">
+                <q-card>
+                  <q-card-section>
+                    <h3>{{ selectedAssessment ? 'Edit' : 'Create' }} Assessment</h3>
+                    <textarea v-model="assessmentComment" rows="4" 
+                      class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Leave an assessment comment..."></textarea>
+                  </q-card-section>
+                  <q-card-actions align="right">
+                    <q-btn label="Cancel" @click="closeModal" color="grey" />
+                    <q-btn v-if="selectedAssessment" label="Update" @click="submitEditedAssessment" color="primary" />
+                    <q-btn v-else label="Create" @click="submitAssessment" color="primary" />
+                  </q-card-actions>
+                </q-card>
+              </q-dialog>
+
             </div>
 
             <!-- Scrollable Assessment List -->
-            <div class="assessment-list" v-if="assessments.length > 0">
-              <div v-for="(assessment, index) in assessments" :key="index" class="mb-4">
-                <p class="text-lg">{{ assessment.comment }}</p>
-                <p class="text-sm text-gray-500">Therapist: {{ assessment.therapist_name }}</p>
-                <p class="text-sm text-gray-500">Date: {{ assessment.created_at }}</p>
-              </div>
-            </div>
+<!-- Scrollable Assessment List -->
+<div class="assessment-list" v-if="assessments.length > 0">
+  <div v-for="(assessment, index) in assessments" :key="index" class="mb-4">
+    <p class="text-lg">{{ assessment.comment }}</p>
+    <p class="text-sm text-gray-500">Therapist: {{ assessment.therapist_name }}</p>
+    <p class="text-sm text-gray-500">Date: {{ assessment.created_at }}</p>
+
+    <!-- Therapist Edit/Delete Actions -->
+    <div v-if="isTherapist">
+      <q-btn label="Edit" @click="editAssessment(assessment)" class="text-blue-500 hover:underline" />
+      <q-btn label="Delete" @click="deleteAssessment(assessment.id)" class="text-red-500 hover:underline ml-3" />
+    </div>
+  </div>
+</div>
+
+
+
+
             <div v-else class="text-gray-500">
               <p>No assessment comments yet.</p>
             </div>
@@ -214,6 +239,22 @@ const authUser = computed(() => auth.user || null);
 console.log("auth.user:", auth.user);
 const { props } = usePage();
 
+const showAssessmentModal = ref(false);
+
+
+// Open the modal for creating or editing an assessment
+const openModal = (assessment = null) => {
+  selectedAssessment.value = assessment;
+  assessmentComment.value = assessment ? assessment.comment : '';  // Populate the comment if editing
+  showAssessmentModal.value = true;
+};
+
+// Close the modal
+const closeModal = () => {
+  showAssessmentModal.value = false;
+  selectedAssessment.value = null;  // Reset the selected assessment
+  assessmentComment.value = '';  // Reset the comment
+};
 // Initialize toast notifications
 const roles = auth.user?.roles.map((role) => role.name) || [];
 
@@ -341,17 +382,19 @@ const fetchAssessmentComment = async () => {
     toast.error('Failed to load assessments.');
   }
 };
+
 const submitAssessment = async () => {
   try {
-    await axios.post(`/assessment`, {
-      client_id: clientId.value,  // Send the correct client ID
+    await axios.post('/assessment', {
+      client_id: clientId.value,
       comment: assessmentComment.value,
     });
-    toast.success('Assessment submitted successfully');
-    fetchAssessmentComment();  // Fetch assessments again after submitting
+    toast.success('Assessment created successfully');
+    fetchAssessmentComment();  // Refresh the assessment list
+    closeModal();  // Close the modal
   } catch (error) {
-    console.error('Error submitting assessment:', error);
-    toast.error('Failed to submit assessment.');
+    toast.error('Failed to create assessment');
+    console.error('Error creating assessment:', error);
   }
 };
 const fetchTherapySessionData = async (userId = null) => {
@@ -594,6 +637,39 @@ const summarizeMoods = (data) => {
 
 // Lifecycle hook: Fetch moods and update calendar on component mount
 
+const selectedAssessment = ref(null);
+
+const editAssessment = (assessment) => {
+  openModal(assessment);  // Use the openModal function to open the modal and populate it with assessment data
+};
+
+const submitEditedAssessment = async () => {
+  if (selectedAssessment.value) {
+    try {
+      await axios.put(`/assessment/${selectedAssessment.value.id}`, {
+        comment: assessmentComment.value,
+      });
+      toast.success('Assessment updated successfully');
+      fetchAssessmentComment();  // Refresh the assessment list
+      closeModal();  // Close the modal
+    } catch (error) {
+      toast.error('Failed to update assessment');
+      console.error('Error updating assessment:', error);
+    }
+  }
+};
+
+const deleteAssessment = async (id) => {
+  try {
+    await axios.delete(`/assessment/${id}`);
+    toast.success('Assessment deleted successfully');
+    fetchAssessmentComment();  // Refresh the assessment list
+  } catch (error) {
+    toast.error('Failed to delete assessment');
+    console.error('Error deleting assessment:', error);
+  }
+};
+
 
 // Fetch all users for the therapist to select
 const fetchUserList = async () => {
@@ -630,6 +706,9 @@ onMounted(async () => {
       // Fetch list of users if the logged-in user is a therapist
       await fetchUserList();
       await fetchAnnouncements();
+      await fetchAssessmentComment();
+      await fetchTherapySessionData(clientId.value || authUser.value.id); // Ensure the session data is also fetched
+    
     } else {
       // Fetch therapy session data for the current logged-in user
       fetchMoods();
@@ -637,6 +716,7 @@ onMounted(async () => {
       await fetchTherapySessionData(authUser.value.id);
       await fetchAssessmentComment(authUser.value.id);
       await fetchAnnouncements();
+      await fetchTherapySessionData(clientId.value || authUser.value.id); // Ensure the session data is also fetched
     }
 
     fetchMoods(); // Fetch moods
@@ -737,6 +817,15 @@ console.log('Monthly Mood Summary:', monthlyMoodSummary.value);
 }
 
 /* Card styles */
+.q-btn {
+  margin-right: 10px;
+}
+.q-btn.text-blue-500 {
+  color: #3490dc;
+}
+.q-btn.text-red-500 {
+  color: #e3342f;
+}
 
 .welcome-card,
 .feelings-tracker-card,

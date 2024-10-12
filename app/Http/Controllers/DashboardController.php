@@ -37,6 +37,39 @@ class DashboardController extends Controller
 
         return response()->json(['message' => 'Announcement created successfully!'], 201);
     }
+    public function updateAssessment(Request $request, $id)
+    {
+        $request->validate([
+            'comment' => 'required|string',
+        ]);
+    
+        $assessment = Assessment::findOrFail($id);
+    
+        // Ensure the therapist owns this assessment
+        if ($assessment->therapist_id !== Auth::id()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+    
+        $assessment->comment = $request->comment;
+        $assessment->save();
+    
+        return response()->json(['message' => 'Assessment updated successfully!']);
+    }
+    
+    // Delete assessment
+    public function destroyAssessment($id)
+    {
+        $assessment = Assessment::findOrFail($id);
+    
+        // Ensure the therapist owns this assessment
+        if ($assessment->therapist_id !== Auth::id()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+    
+        $assessment->delete();
+    
+        return response()->json(['message' => 'Assessment deleted successfully!']);
+    }    
 
     // Method to get all announcements
     public function getAnnouncement() 
@@ -91,20 +124,21 @@ class DashboardController extends Controller
             return response()->json([
                 'assessments' => $assessments->map(function ($assessment) {
                     return [
+                        'id' => $assessment->id,  // Ensure id is included
                         'comment' => $assessment->comment,
                         'therapist_name' => $assessment->therapist->name ?? 'No therapist assigned',
-                        'created_at' => $assessment->created_at->format('Y-m-d H:i:s'),  // Format the date and time
+                        'created_at' => $assessment->created_at->format('Y-m-d H:i:s'),
                     ];
                 }),
             ]);
         } else {
-            // Return a 200 status with a message instead of a 404 error
             return response()->json([
-                'assessments' => [], // Returning an empty array
+                'assessments' => [],
                 'message' => 'No assessments found',
             ], 200);
         }
     }
+    
     
     
     
