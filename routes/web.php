@@ -28,6 +28,9 @@ use App\Http\Controllers\TherapySessionController;
 
 Route::get('/assessment', [DashboardController::class, 'getAssessment']);
 Route::post('/assessment', [DashboardController::class, 'storeAssessment']);
+Route::put('/assessment/{id}', [DashboardController::class, 'updateAssessment']);
+Route::delete('/assessment/{id}', [DashboardController::class, 'destroyAssessment']);
+
 
 Auth::routes(['verify' => true]);
 Broadcast::routes(['middleware' => ['auth:api']]);
