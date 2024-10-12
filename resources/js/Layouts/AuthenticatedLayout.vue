@@ -185,6 +185,16 @@
         >
             <q-scroll-area class="fit" :horizontal-thumb-style="{ opacity: 0 }">
                 <q-list padding>
+                    <Link :href="route('dashboard')">
+                        <q-item clickable class="GPL__drawer-item">
+                            <q-item-section avatar>
+                                <q-icon name="home" :style="{ color: siteSettings.icon_color }"/>
+                            </q-item-section>
+                            <q-item-section>
+                                <q-item-label>Home</q-item-label>
+                            </q-item-section>
+                        </q-item>
+                    </Link>
                     <Link :href="route('newdashboard')">
                         <q-item clickable class="GPL__drawer-item">
                             <q-item-section avatar>

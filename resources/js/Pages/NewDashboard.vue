@@ -33,19 +33,20 @@
               <h3 class="text-lg font-semibold mb-3">Feelings Tracker</h3>
               <p class="text-sm">How are you feeling today?</p>
             </template>
-            <v-calendar v-model="selectedDate" :attributes="calendarAttributes" expanded
-              @dayclick="openMoodPicker"></v-calendar>
+            <v-calendar v-model="selectedDate" :attributes="calendarAttributes" expanded @dayclick="openMoodPicker"
+              class="mb-5"></v-calendar>
 
             <!-- Use q-dialog for the mood picker modal -->
 
             <q-dialog v-model="showPicker">
-              <q-card>
+              <q-card class="mood-selection">
                 <q-card-section>
-                  <h4>Select Your Mood for {{ moment(selectedDate.value).format('YYYY-MM-DD') }}</h4>
-                  <div class="mood-options">
+                  <h4>Select your mood for {{ moment(selectedDate.value).format('YYYY-MM-DD') }}</h4>
+                  <div class="mood-options mt-10">
                     <button v-for="mood in moods" :key="mood.value" @click="selectMood(mood.value)"
-                      :class="['mood-button', `mood-${mood.value}`]">
-                      {{ mood.label }}
+                      :class="[`mood-container`, `mood-${mood.value}`]">
+                      <span class="emoji">{{ mood.label.split(' ')[0] }}</span>
+                      <span class="label">{{ mood.label.split(' ')[1] }}</span>
                     </button>
                   </div>
                 </q-card-section>
@@ -54,14 +55,8 @@
                 </q-card-actions>
               </q-card>
             </q-dialog>
-            <div v-if="isTherapist" class="mood-summary-section">
-              <!-- <q-card class="mood-summary-card">
-                <q-card-section>
-                  <h3 class="text-lg font-semibold mb-3">Weekly Mood Summary</h3>
-                  <ApexCharts type="pie" :options="chartOptions" :series="weeklyMoodSummary" />
-                </q-card-section>
-              </q-card> -->
 
+            <div v-if="isTherapist" class="mood-summary-section">
               <q-card class="mood-summary-card">
                 <q-card-section>
                   <h3 class="text-lg font-semibold mb-3">Monthly Mood Summary</h3>
@@ -90,18 +85,6 @@
             <!-- If the user is a therapist, display their own announcements -->
             <template v-if="isTherapist">
 
-              <ul class="user-announcements-list">
-                <li v-for="announcement in userAnnouncements" :key="announcement.id" class="mb-4 update-session-card">
-                  <h5 class="text-md font-semibold">{{ announcement.title }}</h5>
-                  <p class="text-sm">{{ announcement.content }}</p>
-
-                  <!-- Edit and Delete Buttons -->
-                  <button @click="editAnnouncement(announcement)" class="text-blue-500 hover:underline">Edit</button>
-                  <button @click="deleteAnnouncement(announcement.id)"
-                    class="text-red-500 hover:underline ml-3">Delete</button>
-                </li>
-              </ul>
-
               <!-- Announcement Form for Creating or Editing -->
               <form @submit.prevent="submitAnnouncement">
                 <div class="mb-3">
@@ -118,18 +101,29 @@
 
                 <q-btn label="Submit" type="submit" />
               </form>
+              <ul class="user-announcements-list">
+                <li v-for="announcement in userAnnouncements" :key="announcement.id" class="mb-4 mt-5 update-session-card">
+                  <h5 class="text-md font-semibold">{{ announcement.title }}</h5>
+                  <p class="text-sm">{{ announcement.content }}</p>
+
+                  <!-- Edit and Delete Buttons -->
+                  <button @click="editAnnouncement(announcement)" class="text-blue-500 hover:underline">Edit</button>
+                  <button @click="deleteAnnouncement(announcement.id)"
+                    class="text-red-500 hover:underline ml-3">Delete</button>
+                </li>
+              </ul>  
             </template>
             <template v-else>
-            <!-- Display All Announcements -->
-            <ul class="all-announcements-list">
-              <li v-for="announcement in allAnnouncements" :key="announcement.id" class="mb-4">
-                <h4 class="text-md font-semibold">{{ announcement.title }}</h4>
-                <p class="text-sm text-gray-500">By {{ announcement.therapist.name }} on {{
-                  formatDate(announcement.created_at) }}</p>
-                <p class="text-sm">{{ announcement.content }}</p>
-              </li>
-            </ul>
-          </template>
+              <!-- Display All Announcements -->
+              <ul class="all-announcements-list">
+                <li v-for="announcement in allAnnouncements" :key="announcement.id" class="mb-4">
+                  <h4 class="text-md font-semibold">{{ announcement.title }}</h4>
+                  <p class="text-sm text-gray-500">By {{ announcement.therapist.name }} on {{
+                    formatDate(announcement.created_at) }}</p>
+                  <p class="text-sm">{{ announcement.content }}</p>
+                </li>
+              </ul>
+            </template>
           </q-card-section>
         </q-card>
       </div>
@@ -262,18 +256,18 @@ const clientId = ref(isTherapist.value ? localStorage.getItem(CLIENT_ID_KEY) || 
 const assessments = ref([]);
 
 const fetchAnnouncements = async () => {
-   try {
-     const response = await axios.get('/announcements');
-     console.log("Announcements response:", response.data); // Add this to check the structure
-     if (response.data) {
-       allAnnouncements.value = response.data.allAnnouncements || [];
-       userAnnouncements.value = response.data.userAnnouncements || [];
-     }
-   } catch (error) {
-     console.error('Error fetching announcements:', error);
-     toast.error('Failed to load announcements.');
-   }
- };
+  try {
+    const response = await axios.get('/announcements');
+    console.log("Announcements response:", response.data); // Add this to check the structure
+    if (response.data) {
+      allAnnouncements.value = response.data.allAnnouncements || [];
+      userAnnouncements.value = response.data.userAnnouncements || [];
+    }
+  } catch (error) {
+    console.error('Error fetching announcements:', error);
+    toast.error('Failed to load announcements.');
+  }
+};
 
 // Submit a new announcement (therapist only)
 const submitAnnouncement = async () => {
@@ -453,32 +447,60 @@ const selectMood = async (mood) => {
   form.date = moment(selectedDate.value).format('YYYY-MM-DD');
   form.mood = mood;
 
-  form.post('/moods', {
-    onSuccess: (page) => {
-      const updatedMood = page.props.mood;
+  // Check if the mood for the selected date already exists
+  const existingMood = userMoods.value.find(m => m.date === form.date);
 
-      // Update userMoods array
-      const existingIndex = userMoods.value.findIndex(m => m.date === updatedMood.date);
+  if (existingMood) {
+    // Update existing mood using PUT request
+    try {
+      await axios.post(`/moods/update`, {
+        date: form.date,
+        mood: form.mood,
+      });
+
+      // Update the mood in the userMoods array
+      const existingIndex = userMoods.value.findIndex(m => m.date === existingMood.date);
       if (existingIndex !== -1) {
-        userMoods.value[existingIndex] = updatedMood;
-      } else {
-        userMoods.value.push(updatedMood);
+        userMoods.value[existingIndex] = { ...existingMood, mood: form.mood };
       }
 
       updateCalendarAttributes();
       closePicker();  // Close the mood picker dialog
-      toast.success('Mood saved successfully!');
+      toast.success('Mood updated successfully!');
       errors.value = null;
-
-    },
-    onError: (errors) => {
-      toast.error('Failed to save mood. Please try again.');
-      errors.value = errors;
-    },
-    onFinish: () => {
+    } catch (error) {
+      toast.error('Failed to update mood. Please try again.');
+    } finally {
       loading.value = false;
     }
-  });
+
+  } else {
+    // Create new mood using POST request
+    form.post('/moods', {
+      onSuccess: (page) => {
+        const updatedMood = page.props.mood;
+
+        // Update userMoods array
+        const existingIndex = userMoods.value.findIndex(m => m.date === updatedMood.date);
+        if (existingIndex !== -1) {
+          userMoods.value[existingIndex] = updatedMood;
+        } else {
+          userMoods.value.push(updatedMood);
+        }
+
+        updateCalendarAttributes();
+        closePicker();  // Close the mood picker dialog
+        toast.success('Mood saved successfully!');
+        errors.value = null;
+      },
+      onError: (errors) => {
+        toast.error('Failed to save mood. Please try again.');
+      },
+      onFinish: () => {
+        loading.value = false;
+      }
+    });
+  }
 };
 
 
@@ -489,10 +511,11 @@ const updateCalendarAttributes = () => {
     return;
   }
 
-  calendarAttributes.value = userMoods.value.map((mood) => {
+  // Create a new array for calendar attributes based on userMoods
+  const newAttributes = userMoods.value.map((mood) => {
     return {
       key: mood.mood,
-      dates: new Date(mood.date).toISOString().split('T')[0], // format to YYYY-MM-DD
+      dates: moment(mood.date).format('YYYY-MM-DD'), // format to YYYY-MM-DD
       highlight: {
         color: moodColors[mood.mood] || 'grey', // Default to grey if mood not found
       },
@@ -505,6 +528,9 @@ const updateCalendarAttributes = () => {
       class: `mood-${mood.mood}`, // additional class for styling
     };
   });
+
+  // Assign the new array to calendarAttributes (this ensures Vue's reactivity)
+  calendarAttributes.value = newAttributes;
 };
 
 console.log("roles:", roles);
@@ -606,12 +632,14 @@ onMounted(async () => {
       await fetchAnnouncements();
     } else {
       // Fetch therapy session data for the current logged-in user
+      fetchMoods();
+      updateCalendarAttributes(); 
       await fetchTherapySessionData(authUser.value.id);
       await fetchAssessmentComment(authUser.value.id);
       await fetchAnnouncements();
     }
 
-    await fetchMoods(); // Fetch moods
+    fetchMoods(); // Fetch moods
     updateCalendarAttributes(); // Update calendar attributes for moods
   } catch (error) {
     console.error('Error during initial setup:', error);
@@ -623,6 +651,15 @@ console.log('Weekly Mood Summary:', weeklyMoodSummary.value);
 console.log('Monthly Mood Summary:', monthlyMoodSummary.value);
 </script>
 <style scoped>
+.mood-selection {
+  max-width: 1000px;
+  margin: 0 auto;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background-color: #ffffff;
+}
+
 .update-session-card {
   margin-bottom: 20px;
   border: 1px solid #ddd;
@@ -630,6 +667,7 @@ console.log('Monthly Mood Summary:', monthlyMoodSummary.value);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   padding: 15px;
   background-color: #ffffff;
+
 }
 
 .dashboard-container {
@@ -687,10 +725,21 @@ console.log('Monthly Mood Summary:', monthlyMoodSummary.value);
   }
 }
 
+.announcement-card {
+  margin-bottom: 20px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 15px;
+  background-color: #ffffff;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
 /* Card styles */
+
 .welcome-card,
 .feelings-tracker-card,
-.announcement-card,
 .progress-card,
 .assessment-card {
   margin-bottom: 20px;
@@ -776,27 +825,39 @@ console.log('Monthly Mood Summary:', monthlyMoodSummary.value);
   border-radius: 4px;
   cursor: pointer;
   font-size: 1rem;
+  margin-top: 10px;
 }
 
 .mood-happy {
-  background-color: #ffeb3b;
+  background-color: #d6f6ff; /* Light blue */
 }
 
 .mood-sad {
-  background-color: #90caf9;
+  background-color: #b3f5bc; /* Light green */
 }
 
 .mood-neutral {
-  background-color: #e0e0e0;
+  background-color: #f9ffb5;
 }
 
 .mood-excited {
-  background-color: #ff9800;
+  background-color: #fa9189;
 }
 
 .mood-angry {
-  background-color: #f44336;
+  background-color: #e2cbf7;
+
 }
+
+.mood-happy .label, 
+.mood-neutral .label, 
+.mood-excited .label,
+.mood-sad .label,
+.mood-angry .label {
+  color: black;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+}
+
 
 /* Add more mood-specific styles as needed */
 
@@ -815,5 +876,81 @@ console.log('Monthly Mood Summary:', monthlyMoodSummary.value);
 .error-messages {
   color: red;
   margin-top: 10px;
+}
+
+@keyframes wave {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  25% {
+    transform: rotate(25deg);
+  }
+
+  0% {
+    transform: rotate(0deg);
+  }
+
+  75% {
+    transform: rotate(-25deg);
+  }
+
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.wave .emoji {
+  font-size: 28px;
+  display: inline-block;
+  animation: wave 0.3s ease-in-out 4;
+  animation-direction: alternate;
+}
+
+.mood-options {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+}
+
+.mood-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  margin: 0 auto;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 10px 20px;
+  font-size: 1rem;
+  
+}
+.mood-container:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
+}
+
+
+.emoji {
+  font-size: 50px;
+  /* Enlarge the emoji */
+  margin-bottom: 5px;
+
+}
+
+.emoji:hover {
+  font-size: 50px;
+  /* Enlarge the emoji */
+  margin-bottom: 5px;
+  animation: wave 0.5s
+}
+
+.label {
+  font-size: 14px;
+  /* Smaller label */
+  color: white;
 }
 </style>

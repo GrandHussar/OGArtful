@@ -149,6 +149,8 @@ Route::middleware(['auth', CheckRestriction::class])->group(function () {
     // Route to store or update mood data (POST)
     Route::post('/moods', [DashboardController::class, 'store'])->name('moods.store');
 
+    Route::post('/moods/update', [DashboardController::class, 'updateMoods'])->name('moods.update');
+
     // Middleware for Super Admin
     Route::middleware([RoleMiddleware::class . ':super_admin'])->group(function () {
         Route::get('/super-admin', function () {

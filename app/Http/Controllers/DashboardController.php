@@ -177,4 +177,35 @@ class DashboardController extends Controller
 
         return Inertia::location(route('newdashboard'));
     }
+
+    public function updateMoods(Request $request)
+    {
+        // Validate the incoming request
+        $request->validate([
+            'mood' => 'required|string|in:happy,sad,neutral,excited,angry',
+            'date' => 'required|date',
+        ]);
+    
+        // Find the mood entry by user_id and date
+        $mood = Mood::where('user_id', Auth::id())
+                    ->where('date', $request->date)
+                    ->first();
+    
+        if (!$mood) {
+            return response()->json(['error' => 'Mood entry not found'], 404); // Not found
+        }
+    
+        // Ensure the authenticated user owns the mood entry
+        if ($mood->user_id !== Auth::id()) {
+            return response()->json(['error' => 'Unauthorized'], 403); // Forbidden
+        }
+    
+        // Update the mood
+        $mood->update([
+            'mood' => $request->mood,
+        ]);
+    
+        return Inertia::location(route('newdashboard'));
+    }
+    
 }
