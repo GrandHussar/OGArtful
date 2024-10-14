@@ -166,18 +166,15 @@ class DashboardController extends Controller
      * Fetch moods data for the authenticated user.
      */
     
-    public function index2()
-    {
-        // Define the role name you're looking for
-        $roleName = 'user';
-
-        // Fetch users with the specified role
-        $users = User::whereHas('roles', function ($query) use ($roleName) {
-            $query->where('name', $roleName);
-        })->select('id', 'name')->get();
-
-        return response()->json($users);
-    }
+     public function index2()
+     {
+         // Fetch users with the "user" role only (exclude admin and therapist)
+         $users = User::whereHas('roles', function ($query) {
+             $query->where('name', 'user');
+         })->select('id', 'name')->get();
+     
+         return response()->json($users);
+     }
     public function getMoods(Request $request)
     {
         // Get the recipientId from the request, default to the logged-in user's ID if not provided

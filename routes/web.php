@@ -55,8 +55,15 @@ Broadcast::routes(['middleware' => ['auth:api']]);
 //     Route::post('/chat/setActiveStatus', [MessagesController::class, 'setActiveStatus'])->name('chat.setActiveStatus');
 // });
 
-
-Route::get('/', [PostController::class, 'index'])->name('dashboard');
+Route::get('/', function () {
+    return Inertia::render('Welcome', [
+        'canLogin' => Route::has('login'),
+        'canRegister' => Route::has('register'),
+        'laravelVersion' => Application::VERSION,
+        'phpVersion' => PHP_VERSION,
+    ]);
+});
+Route::get('/homepage', [PostController::class, 'index'])->name('dashboard');
 Route::get('/restricted', function () {
     return Inertia::render('Restricted');
 })->name('restricted');

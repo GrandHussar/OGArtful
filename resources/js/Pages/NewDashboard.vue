@@ -10,12 +10,13 @@
             <template v-if="isTherapist">
               <h3 class="text-2xl font-bold mb-2">Welcome Back, {{ authUser.name }}</h3>
               <select v-model="clientId" @change="fetchTherapySessionData(clientId)"
-                class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none">
-                <option disabled value="">Pick a client...</option>
-                <option v-for="user in users" :key="user.id" :value="user.id">
-                  {{ user.name }}
-                </option>
-              </select>
+  class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none">
+  <option disabled value="">Pick a client...</option>
+  <option v-for="user in users" :key="user.id" :value="user.id">
+    {{ user.name }}
+  </option>
+</select>
+
             </template>
             <template v-else>
               <h3 class="text-2xl font-bold mb-2">Welcome Back, {{ authUser.name }}</h3>
@@ -674,24 +675,58 @@ const deleteAssessment = async (id) => {
 // Fetch all users for the therapist to select
 const fetchUserList = async () => {
   try {
-    const response = await axios.get('/users');
-    users.value = response.data;
+    const response = await axios.get('/users2'); // Calls the updated API
+    users.value = response.data; // Store the users
   } catch (error) {
     console.error('Error fetching user list:', error);
+    toast.error('Failed to fetch user list.');
   }
 };
+
 // Update session progress for the selected user (therapist only)
 const updateTherapySessions = async () => {
-  try {
-    await axios.post(`/therapy-sessions/${clientId.value}`, {
-      sessions_done: sessionsDone.value,
-      total_sessions: totalSessions.value
-    });
-    toast.success('Therapy session updated successfully');
-  } catch (error) {
-    console.error('Error updating therapy session data:', error);
-    toast.error('Failed to update therapy session.');
-  }
+    const sessionsDoneInt = parseInt(sessionsDone.value, 10);
+    const totalSessionsInt = parseInt(totalSessions.value, 10);
+
+    // Ensure total sessions and sessions done are valid integers
+    if (isNaN(sessionsDoneInt) || isNaN(totalSessionsInt)) {
+        toast.error('Both "Sessions Done" and "Total Sessions" must be valid numbers.');
+        return;
+    }
+
+    // Handle the special case of 0/0
+    if (sessionsDoneInt === 0 && totalSessionsInt === 0) {
+        toast.error('Both "Sessions Done" and "Total Sessions" cannot be 0.');
+        return;
+    }
+
+    // Validate that sessions_done does not exceed total_sessions
+    if (sessionsDoneInt > totalSessionsInt) {
+        toast.error('"Sessions Done" cannot exceed "Total Sessions."');
+        return;
+    }
+
+    try {
+        const response = await axios.post(`/therapy-sessions/${clientId.value}`, {
+            sessions_done: sessionsDoneInt,
+            total_sessions: totalSessionsInt,
+        });
+
+        if (response.status === 200) {
+            toast.success('Therapy session updated successfully.');
+        } else {
+            toast.error('Failed to update therapy session. Please try again.');
+        }
+    } catch (error) {
+        console.error('Error updating therapy session:', error);
+
+        // Handle 403 unauthorized errors explicitly
+        if (error.response && error.response.status === 403) {
+            toast.error('You are not authorized to update this session.');
+        } else {
+            toast.error('Failed to update therapy session. Please try again later.');
+        }
+    }
 };
 
 const formatDate = (dateString) => {
