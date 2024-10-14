@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('moods', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->date('date')->unique();
+            $table->date('date');
             $table->string('mood'); // e.g., 'happy', 'sad', etc.
             $table->timestamps();
     });

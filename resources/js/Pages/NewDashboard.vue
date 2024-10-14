@@ -10,12 +10,12 @@
             <template v-if="isTherapist">
               <h3 class="text-2xl font-bold mb-2">Welcome Back, {{ authUser.name }}</h3>
               <select v-model="clientId" @change="fetchTherapySessionData(clientId)"
-  class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none">
-  <option disabled value="">Pick a client...</option>
-  <option v-for="user in users" :key="user.id" :value="user.id">
-    {{ user.name }}
-  </option>
-</select>
+                class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none">
+                <option disabled value="">Pick a client...</option>
+                <option v-for="user in users" :key="user.id" :value="user.id">
+                  {{ user.name }}
+                </option>
+              </select>
 
             </template>
             <template v-else>
@@ -56,15 +56,25 @@
                 </q-card-actions>
               </q-card>
             </q-dialog>
-
             <div v-if="isTherapist" class="mood-summary-section">
-              <q-card class="mood-summary-card">
-                <q-card-section>
-                  <h3 class="text-lg font-semibold mb-3">Monthly Mood Summary</h3>
-                  <ApexCharts type="pie" :options="chartOptions" :series="monthlyMoodSummary" />
-                </q-card-section>
-              </q-card>
-            </div>
+  <q-card class="mood-summary-card">
+    <q-card-section>
+      <h3 class="text-lg font-semibold mb-3">Monthly Mood Summary</h3>
+      <label for="month-picker" class="block text-sm font-medium text-gray-700">Select Month</label>
+      <div class="relative">
+        <input
+          type="month"
+          id="month-picker"
+          v-model="selectedMonth"
+          @change="updateMoodSummaries"
+          class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2 mb-4"
+        />
+        <span class="month-picker-arrow"></span>
+      </div>
+      <ApexCharts type="pie" :options="chartOptions" :series="monthlyMoodSummary" />
+    </q-card-section>
+  </q-card>
+</div>
             <!-- Display validation errors -->
             <div v-if="errors" class="error-messages">
               <ul>
@@ -103,7 +113,8 @@
                 <q-btn label="Submit" type="submit" />
               </form>
               <ul class="user-announcements-list">
-                <li v-for="announcement in userAnnouncements" :key="announcement.id" class="mb-4 mt-5 update-session-card">
+                <li v-for="announcement in userAnnouncements" :key="announcement.id"
+                  class="mb-4 mt-5 update-session-card">
                   <h5 class="text-md font-semibold">{{ announcement.title }}</h5>
                   <p class="text-sm">{{ announcement.content }}</p>
 
@@ -112,7 +123,7 @@
                   <button @click="deleteAnnouncement(announcement.id)"
                     class="text-red-500 hover:underline ml-3">Delete</button>
                 </li>
-              </ul>  
+              </ul>
             </template>
             <template v-else>
               <!-- Display All Announcements -->
@@ -168,12 +179,11 @@
             <!-- For Therapist -->
             <div v-if="isTherapist">
               <q-btn label="Add New Assessment" @click="openModal()" class="mb-3" color="primary" />
-
               <q-dialog v-model="showAssessmentModal">
                 <q-card>
                   <q-card-section>
                     <h3>{{ selectedAssessment ? 'Edit' : 'Create' }} Assessment</h3>
-                    <textarea v-model="assessmentComment" rows="4" 
+                    <textarea v-model="assessmentComment" rows="4"
                       class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="Leave an assessment comment..."></textarea>
                   </q-card-section>
@@ -184,28 +194,21 @@
                   </q-card-actions>
                 </q-card>
               </q-dialog>
-
             </div>
+            <div class="assessment-list" v-if="assessments.length > 0">
+              <div v-for="(assessment, index) in assessments" :key="index" class="mb-4">
+                <p class="text-lg">{{ assessment.comment }}</p>
+                <p class="text-sm text-gray-500">Therapist: {{ assessment.therapist_name }}</p>
+                <p class="text-sm text-gray-500">Date: {{ assessment.created_at }}</p>
 
-            <!-- Scrollable Assessment List -->
-<!-- Scrollable Assessment List -->
-<div class="assessment-list" v-if="assessments.length > 0">
-  <div v-for="(assessment, index) in assessments" :key="index" class="mb-4">
-    <p class="text-lg">{{ assessment.comment }}</p>
-    <p class="text-sm text-gray-500">Therapist: {{ assessment.therapist_name }}</p>
-    <p class="text-sm text-gray-500">Date: {{ assessment.created_at }}</p>
-
-    <!-- Therapist Edit/Delete Actions -->
-    <div v-if="isTherapist">
-      <q-btn label="Edit" @click="editAssessment(assessment)" class="text-blue-500 hover:underline" />
-      <q-btn label="Delete" @click="deleteAssessment(assessment.id)" class="text-red-500 hover:underline ml-3" />
-    </div>
-  </div>
-</div>
-
-
-
-
+                <!-- Therapist Edit/Delete Actions -->
+                <div v-if="isTherapist">
+                  <q-btn label="Edit" @click="editAssessment(assessment)" class="text-blue-500 hover:underline" />
+                  <q-btn label="Delete" @click="deleteAssessment(assessment.id)"
+                    class="text-red-500 hover:underline ml-3" />
+                </div>
+              </div>
+            </div>
             <div v-else class="text-gray-500">
               <p>No assessment comments yet.</p>
             </div>
@@ -273,6 +276,7 @@ const moods = ref([
 ]);
 const userMoods = ref([]);
 const calendarAttributes = ref([]);
+const selectedMonth = ref(moment().format('YYYY-MM'));
 const errors = ref(null);
 const loading = ref(false);
 const sessionsDone = ref(0);
@@ -605,21 +609,21 @@ const chartOptions = ref({
 
 // Update mood summaries for weekly and monthly data
 const updateMoodSummaries = () => {
-  const currentWeek = moment().week();    // Current week of the year
-  const currentMonth = moment().month();  // Current month (zero-indexed)
+  const selectedMoment = moment(selectedMonth.value, 'YYYY-MM');
+  const monthlyMoods = userMoods.value.filter((mood) =>
+    moment(mood.date).isSame(selectedMoment, 'month')
+  );
 
-  // Debugging output
-  console.log('userMoods.value:', userMoods.value);
-  console.log('Current Week:', currentWeek);
-  console.log('Current Month:', currentMonth + 1); // Add 1 to match human-readable months
+  // Count moods for the selected month
+  const moodCounts = { happy: 0, sad: 0, neutral: 0, excited: 0, angry: 0 };
+  monthlyMoods.forEach((mood) => {
+    if (moodCounts[mood.mood] !== undefined) {
+      moodCounts[mood.mood]++;
+    }
+  });
 
-  // Group by week and month
-  const weeklyData = userMoods.value.filter(mood => moment(mood.date).week() === currentWeek);
-  const monthlyData = userMoods.value.filter(mood => moment(mood.date).month() === currentMonth);
-
-  // Summarize moods
-  weeklyMoodSummary.value = summarizeMoods(weeklyData);
-  monthlyMoodSummary.value = summarizeMoods(monthlyData);
+  // Update the pie chart data
+  monthlyMoodSummary.value = Object.values(moodCounts);
 };
 
 
@@ -685,48 +689,48 @@ const fetchUserList = async () => {
 
 // Update session progress for the selected user (therapist only)
 const updateTherapySessions = async () => {
-    const sessionsDoneInt = parseInt(sessionsDone.value, 10);
-    const totalSessionsInt = parseInt(totalSessions.value, 10);
+  const sessionsDoneInt = parseInt(sessionsDone.value, 10);
+  const totalSessionsInt = parseInt(totalSessions.value, 10);
 
-    // Ensure total sessions and sessions done are valid integers
-    if (isNaN(sessionsDoneInt) || isNaN(totalSessionsInt)) {
-        toast.error('Both "Sessions Done" and "Total Sessions" must be valid numbers.');
-        return;
+  // Ensure total sessions and sessions done are valid integers
+  if (isNaN(sessionsDoneInt) || isNaN(totalSessionsInt)) {
+    toast.error('Both "Sessions Done" and "Total Sessions" must be valid numbers.');
+    return;
+  }
+
+  // Handle the special case of 0/0
+  if (sessionsDoneInt === 0 && totalSessionsInt === 0) {
+    toast.error('Both "Sessions Done" and "Total Sessions" cannot be 0.');
+    return;
+  }
+
+  // Validate that sessions_done does not exceed total_sessions
+  if (sessionsDoneInt > totalSessionsInt) {
+    toast.error('"Sessions Done" cannot exceed "Total Sessions."');
+    return;
+  }
+
+  try {
+    const response = await axios.post(`/therapy-sessions/${clientId.value}`, {
+      sessions_done: sessionsDoneInt,
+      total_sessions: totalSessionsInt,
+    });
+
+    if (response.status === 200) {
+      toast.success('Therapy session updated successfully.');
+    } else {
+      toast.error('Failed to update therapy session. Please try again.');
     }
+  } catch (error) {
+    console.error('Error updating therapy session:', error);
 
-    // Handle the special case of 0/0
-    if (sessionsDoneInt === 0 && totalSessionsInt === 0) {
-        toast.error('Both "Sessions Done" and "Total Sessions" cannot be 0.');
-        return;
+    // Handle 403 unauthorized errors explicitly
+    if (error.response && error.response.status === 403) {
+      toast.error('You are not authorized to update this session.');
+    } else {
+      toast.error('Failed to update therapy session. Please try again later.');
     }
-
-    // Validate that sessions_done does not exceed total_sessions
-    if (sessionsDoneInt > totalSessionsInt) {
-        toast.error('"Sessions Done" cannot exceed "Total Sessions."');
-        return;
-    }
-
-    try {
-        const response = await axios.post(`/therapy-sessions/${clientId.value}`, {
-            sessions_done: sessionsDoneInt,
-            total_sessions: totalSessionsInt,
-        });
-
-        if (response.status === 200) {
-            toast.success('Therapy session updated successfully.');
-        } else {
-            toast.error('Failed to update therapy session. Please try again.');
-        }
-    } catch (error) {
-        console.error('Error updating therapy session:', error);
-
-        // Handle 403 unauthorized errors explicitly
-        if (error.response && error.response.status === 403) {
-            toast.error('You are not authorized to update this session.');
-        } else {
-            toast.error('Failed to update therapy session. Please try again later.');
-        }
-    }
+  }
 };
 
 const formatDate = (dateString) => {
@@ -743,11 +747,11 @@ onMounted(async () => {
       await fetchAnnouncements();
       await fetchAssessmentComment();
       await fetchTherapySessionData(clientId.value || authUser.value.id); // Ensure the session data is also fetched
-    
+
     } else {
       // Fetch therapy session data for the current logged-in user
       fetchMoods();
-      updateCalendarAttributes(); 
+      updateCalendarAttributes();
       await fetchTherapySessionData(authUser.value.id);
       await fetchAssessmentComment(authUser.value.id);
       await fetchAnnouncements();
@@ -855,9 +859,11 @@ console.log('Monthly Mood Summary:', monthlyMoodSummary.value);
 .q-btn {
   margin-right: 10px;
 }
+
 .q-btn.text-blue-500 {
   color: #3490dc;
 }
+
 .q-btn.text-red-500 {
   color: #e3342f;
 }
@@ -953,11 +959,13 @@ console.log('Monthly Mood Summary:', monthlyMoodSummary.value);
 }
 
 .mood-happy {
-  background-color: #d6f6ff; /* Light blue */
+  background-color: #d6f6ff;
+  /* Light blue */
 }
 
 .mood-sad {
-  background-color: #b3f5bc; /* Light green */
+  background-color: #b3f5bc;
+  /* Light green */
 }
 
 .mood-neutral {
@@ -973,8 +981,8 @@ console.log('Monthly Mood Summary:', monthlyMoodSummary.value);
 
 }
 
-.mood-happy .label, 
-.mood-neutral .label, 
+.mood-happy .label,
+.mood-neutral .label,
 .mood-excited .label,
 .mood-sad .label,
 .mood-angry .label {
@@ -1050,8 +1058,9 @@ console.log('Monthly Mood Summary:', monthlyMoodSummary.value);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   padding: 10px 20px;
   font-size: 1rem;
-  
+
 }
+
 .mood-container:hover {
   transform: translateY(-5px);
   box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
@@ -1077,4 +1086,19 @@ console.log('Monthly Mood Summary:', monthlyMoodSummary.value);
   /* Smaller label */
   color: white;
 }
+
+
+.month-picker-arrow {
+  position: absolute;
+  top: 50%;
+  right: 13px;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid #a0aec0; /* Gray color */
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
 </style>
