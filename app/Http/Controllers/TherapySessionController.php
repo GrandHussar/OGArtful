@@ -35,36 +35,39 @@ class TherapySessionController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            // Check if the therapy session exists
+            // Find or create the therapy session for the user
             $therapySession = TherapySession::firstOrCreate(
-                ['user_id' => $id], // Condition to find the session
+                ['user_id' => $id],
                 [
-                    'therapist_id' => Auth::id(), // If not found, create a new session with these attributes
-                    'total_sessions' => $request->input('total_sessions', 10), // Default total sessions if not provided
+                    'therapist_id' => Auth::id(),  // Assign therapist if creating a new session
+                    'total_sessions' => $request->input('total_sessions', 10), // Default if not provided
+                    'sessions_done' => 0,  // Initialize sessions_done to 0 if created
                 ]
             );
     
-            // Ensure that the authenticated user is the therapist for the session
+            // Ensure the authenticated user is the assigned therapist
             if (Auth::id() != $therapySession->therapist_id) {
                 return response()->json(['error' => 'Unauthorized'], 403);
             }
     
-            // Validate the incoming request data
+            // Validate the request data
             $request->validate([
                 'sessions_done' => 'required|integer|min:0|max:' . $therapySession->total_sessions,
+                'total_sessions' => 'required|integer|min:1',  // Ensure total_sessions is valid
             ]);
     
-            // Update the session progress
+            // Update the session progress and total sessions if needed
             $therapySession->sessions_done = $request->input('sessions_done');
+            $therapySession->total_sessions = $request->input('total_sessions', $therapySession->total_sessions);
             $therapySession->save();
     
             return response()->json(['success' => 'Therapy session updated successfully'], 200);
         } catch (\Exception $e) {
+            // Log any errors for debugging
             \Log::error('TherapySession update error: ' . $e->getMessage());
             return response()->json(['error' => 'Failed to update therapy session', 'message' => $e->getMessage()], 500);
         }
     }
-    
     
     
     
