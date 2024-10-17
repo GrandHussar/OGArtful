@@ -196,10 +196,10 @@
               </q-dialog>
             </div>
             <div class="assessment-list" v-if="assessments.length > 0">
-              <div v-for="(assessment, index) in assessments" :key="index" class="mb-4">
+              <div  v-for="(assessment, index) in assessments" :key="index" class="assessment-item">
                 <p class="text-lg">{{ assessment.comment }}</p>
-                <p class="text-sm text-gray-500">Therapist: {{ assessment.therapist_name }}</p>
-                <p class="text-sm text-gray-500">Date: {{ assessment.created_at }}</p>
+                <p class="assessment-date">Therapist: {{ assessment.therapist_name }} | Date: {{ assessment.created_at }}</p>
+  
 
                 <!-- Therapist Edit/Delete Actions -->
                 <div v-if="isTherapist">
@@ -798,13 +798,49 @@ console.log('Monthly Mood Summary:', monthlyMoodSummary.value);
   /* Add padding to the container */
 }
 
+/* Improve assessment spacing */
 .assessment-list {
   max-height: 200px;
-  /* Adjust the height based on your design */
   overflow-y: auto;
   padding-right: 10px;
-  /* Space for the scrollbar */
+  margin-bottom: 15px; /* Add margin at the bottom */
 }
+
+.assessment-list .assessment-item {
+  padding: 10px;
+  margin-bottom: 15px;
+  background-color: #f9f9f9; /* Lighter background for better contrast */
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.assessment-item p {
+  white-space: pre-line; /* This will ensure that line breaks and spaces are respected */
+  margin-bottom: 10px;
+  line-height: 1.6;
+}
+
+.assessment-item .assessment-date {
+  font-size: 12px;
+  color: #6b7280; /* Light gray for the date text */
+}
+
+/* Change input color to white */
+input[type="number"] {
+  background-color: white; /* Change the background to white */
+  color: black; /* Ensure the text is still visible */
+  border: 1px solid #ddd; /* Light gray border */
+  border-radius: 6px;
+  padding: 10px;
+  margin-top: 5px; /* Add some space between the input and label */
+}
+
+input[type="number"]:focus {
+  outline: none;
+  border-color: #3182ce; /* Blue border on focus */
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5); /* Focus shadow effect */
+}
+
 
 .main-content {
   flex: 1;
