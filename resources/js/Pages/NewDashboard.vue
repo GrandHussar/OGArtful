@@ -82,10 +82,9 @@
             </div>
             <div v-else>
               <h3>Available Appointment Dates</h3>
-              <div v-if="availableDatesForClient.length">
-                <h3>Available Appointment Dates</h3>
+              <div v-if="availableDates.length">
                 <ul>
-                  <li v-for="date in availableDatesForClient" :key="date.id">
+                  <li v-for="date in availableDates" :key="date.id">
                     {{ formatDate(date) }}
                     <q-btn label="Pick Date" @click="requestAppointment(date)" />
                   </li>
