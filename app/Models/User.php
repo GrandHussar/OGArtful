@@ -49,6 +49,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'password' => 'hashed',
         'restriction_end_at' => 'datetime',
     ];
+    public function appointments() {
+        return $this->hasMany(Appointment::class);
+    }
 
     public function Posts()
     {

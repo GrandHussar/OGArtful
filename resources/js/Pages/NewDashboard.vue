@@ -56,25 +56,59 @@
                 </q-card-actions>
               </q-card>
             </q-dialog>
+            <div v-if="isTherapist">
+              <h3>Available Dates for Appointments</h3>
+              <q-input v-model="newAvailableDate" label="Select Date" type="date" />
+              <q-input v-model="newAvailableTime" label="Select Time" type="time" />
+              <q-btn label="Save Date" @click="saveAvailableDate" />
+              <div v-if="availableDates.length" class="mt-4">
+                <p>Available Dates:</p>
+                <ul>
+                  <li v-for="date in availableDates" :key="date.id">
+                    {{ formatDate(date) }}
+
+                    <q-btn label="Delete" @click="deleteDate(date.id)" />
+                  </li>
+                  <br/>
+                  <h3>Appointments with clients</h3>
+                  <li v-for="appointment in appointments" :key="appointment.id">
+                    <p>
+                      Appointment with {{ appointment.user.name }} on {{ appointment.appointment_date }} at
+                      {{ appointment.appointment_time }}
+                    </p>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div v-else>
+              <h3>Available Appointment Dates</h3>
+              <div v-if="availableDatesForClient.length">
+                <h3>Available Appointment Dates</h3>
+                <ul>
+                  <li v-for="date in availableDatesForClient" :key="date.id">
+                    {{ formatDate(date) }}
+                    <q-btn label="Pick Date" @click="requestAppointment(date)" />
+                  </li>
+                </ul>
+              </div>
+              <div v-else>
+                <p>No available dates at the moment.</p>
+              </div>
+            </div>
             <div v-if="isTherapist" class="mood-summary-section">
-  <q-card class="mood-summary-card">
-    <q-card-section>
-      <h3 class="text-lg font-semibold mb-3">Monthly Mood Summary</h3>
-      <label for="month-picker" class="block text-sm font-medium text-gray-700">Select Month</label>
-      <div class="relative">
-        <input
-          type="month"
-          id="month-picker"
-          v-model="selectedMonth"
-          @change="updateMoodSummaries"
-          class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2 mb-4"
-        />
-        <span class="month-picker-arrow"></span>
-      </div>
-      <ApexCharts type="pie" :options="chartOptions" :series="monthlyMoodSummary" />
-    </q-card-section>
-  </q-card>
-</div>
+              <q-card class="mood-summary-card">
+                <q-card-section>
+                  <h3 class="text-lg font-semibold mb-3">Monthly Mood Summary</h3>
+                  <label for="month-picker" class="block text-sm font-medium text-gray-700">Select Month</label>
+                  <div class="relative">
+                    <input type="month" id="month-picker" v-model="selectedMonth" @change="updateMoodSummaries"
+                      class="w-full p-3 border border-gray-300 rounded-lg text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2 mb-4" />
+                    <span class="month-picker-arrow"></span>
+                  </div>
+                  <ApexCharts type="pie" :options="chartOptions" :series="monthlyMoodSummary" />
+                </q-card-section>
+              </q-card>
+            </div>
             <!-- Display validation errors -->
             <div v-if="errors" class="error-messages">
               <ul>
@@ -196,10 +230,12 @@
               </q-dialog>
             </div>
             <div class="assessment-list" v-if="assessments.length > 0">
-              <div  v-for="(assessment, index) in assessments" :key="index" class="assessment-item">
+              <div v-for="(assessment, index) in assessments" :key="index" class="assessment-item">
                 <p class="text-lg">{{ assessment.comment }}</p>
-                <p class="assessment-date">Therapist: {{ assessment.therapist_name }} | Date: {{ assessment.created_at }}</p>
-  
+                <p class="assessment-date">Therapist: {{ assessment.therapist_name }} | Date: {{ assessment.created_at
+                  }}
+                </p>
+
 
                 <!-- Therapist Edit/Delete Actions -->
                 <div v-if="isTherapist">
@@ -229,7 +265,131 @@ import ApexCharts from 'vue3-apexcharts';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 const CLIENT_ID_KEY = 'selectedClientId';
 
+const appointments = ref([]);
+const availableDates = ref([]);
+const availableDatesForClient = ref([]);
+const newAvailableDate = ref('');
+const newAvailableTime = ref('');
+const selectedDateId = ref(null);
 
+const fetchAppointments = async () => {
+  try {
+    const response = await axios.get('/therapist/appointments');
+    appointments.value = response.data.appointments || [];
+  } catch (error) {
+    toast.error('Failed to load appointments.');
+  }
+};
+const fetchAssessments = async () => {
+  try {
+    const response = await axios.get('/assessments');
+    assessments.value = response.data.assessments || [];
+  } catch (error) {
+    toast.error('Failed to load assessments.');
+  }
+};
+
+const fetchAvailableDates = async () => {
+  try {
+    const response = await axios.get('/available-dates/all');
+    console.log('Response data:', response.data); // Add logging to see what you get
+    availableDates.value = response.data.availableDates.map(date => ({
+      ...date,
+      time: convertTo12HourFormat(date.time),
+    })) || [];
+  } catch (error) {
+    console.error('Error fetching available dates:', error.response);
+    toast.error('Failed to load available dates: ' + (error.response?.data?.message || 'Unknown error'));
+  }
+};
+
+const fetchAvailableDatesForClient = async () => {
+  try {
+    const response = await axios.get('/available-dates/all');
+    console.log('Available Dates Response:', response.data);
+
+    // Check if the response data is in the expected format
+    if (response.data && Array.isArray(response.data.availableDates)) {
+      availableDatesForClient.value = response.data.availableDates || [];
+    } else {
+      console.warn('availableDates is not an array or is undefined');
+      availableDatesForClient.value = [];
+    }
+  } catch (error) {
+    console.error('Failed to load available dates.', error.response ? error.response.data : error);
+    toast.error('Failed to load available dates: ' + (error.response?.data?.message || 'Unknown error'));
+  }
+};
+
+
+
+// Time conversion function
+const convertTo12HourFormat = (time) => {
+  console.log('Converting time:', time); // Log the time being converted
+  if (!time) return ''; // Return empty if time is not provided
+
+  // Extract hours and minutes, ignoring seconds if present
+  const [hours, minutes] = time.split(':').slice(0, 2);
+  const hour = parseInt(hours, 10);
+
+  // Correctly assign AM/PM
+  const period = hour >= 12 ? 'PM' : 'AM';
+
+  // Convert to 12-hour format
+  const formattedHour = hour % 12 || 12; // Adjust 0 to 12 for 12-hour clock
+  console.log(`Formatted time: ${formattedHour}:${minutes} ${period}`); // Log final output for verification
+
+  return `${formattedHour}:${minutes} ${period}`;
+};
+
+
+const saveAvailableDate = async () => {
+  try {
+    // Access the actual values from the reactive references
+    const dateValue = newAvailableDate.value; // Assuming newAvailableDate is a ref
+    const timeValue = newAvailableTime.value; // Assuming newAvailableTime is a ref
+
+    console.log('Sending:', {
+      available_date: dateValue,
+      available_time: timeValue,
+    });
+
+    await axios.post('/available-dates', {
+      available_date: dateValue,
+      available_time: timeValue,
+    });
+
+    fetchAvailableDates(); // Reload the dates after saving
+  } catch (error) {
+    console.error('Failed to save available date', error.response?.data || error);
+    toast.error('Failed to save available date.');
+  }
+};
+
+
+const deleteDate = async (id) => {
+  try {
+    await axios.delete(`/available-dates/${id}`);
+    fetchAvailableDates();
+  } catch (error) {
+    console.error('Error deleting date:', error);
+    toast.error('Failed to delete available date.');
+  }
+};
+
+const requestAppointment = async (date) => {
+  try {
+    await axios.post('/appointments', {
+      appointment_date: date.date,
+      appointment_time: date.time,
+      therapist_id: date.therapist_id,
+    });
+    toast.success('Appointment booked successfully!');
+    fetchAvailableDatesForClient();
+  } catch (error) {
+    toast.error('Failed to book appointment.');
+  }
+};
 // Initialize toast notifications
 const users = ref([]);
 const toast = useToast();
@@ -732,9 +892,20 @@ const updateTherapySessions = async () => {
     }
   }
 };
+const formatDate = (dateObj) => {
+  // Extract date parts from dateObj.date (YYYY-MM-DD format)
+  const [year, month, day] = dateObj.date.split('-').map(part => parseInt(part, 10));
+  console.log(`Extracted Date Parts - Year: ${year}, Month: ${month}, Day: ${day}`);
 
-const formatDate = (dateString) => {
-  return new Date(dateString).toLocaleDateString();
+  // Extract time string from dateObj.time (HH:mm:ss format)
+  const timeString = dateObj.time ? dateObj.time : '00:00:00';
+  console.log(`Raw Time String: ${timeString}`); // Log the raw time string
+
+  // Create a formatted date string
+  const dateString = `${month}/${day}/${year}`; // Format as MM/DD/YYYY
+
+  // Simply return the combined date and time without conversion
+  return `${dateString}, ${timeString}`; // Return MM/DD/YYYY, HH:mm:ss
 };
 
 onMounted(async () => {
@@ -743,6 +914,7 @@ onMounted(async () => {
 
     if (isTherapist.value) {
       // Fetch list of users if the logged-in user is a therapist
+      await fetchAppointments();
       await fetchUserList();
       await fetchAnnouncements();
       await fetchAssessmentComment();
@@ -750,6 +922,7 @@ onMounted(async () => {
 
     } else {
       // Fetch therapy session data for the current logged-in user
+
       fetchMoods();
       updateCalendarAttributes();
       await fetchTherapySessionData(authUser.value.id);
@@ -757,6 +930,8 @@ onMounted(async () => {
       await fetchAnnouncements();
       await fetchTherapySessionData(clientId.value || authUser.value.id); // Ensure the session data is also fetched
     }
+    fetchAvailableDates();
+    fetchAvailableDatesForClient();
 
     fetchMoods(); // Fetch moods
     updateCalendarAttributes(); // Update calendar attributes for moods
@@ -770,6 +945,11 @@ console.log('Weekly Mood Summary:', weeklyMoodSummary.value);
 console.log('Monthly Mood Summary:', monthlyMoodSummary.value);
 </script>
 <style scoped>
+.ticketing-system {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
 .mood-selection {
   max-width: 1000px;
   margin: 0 auto;
@@ -803,42 +983,52 @@ console.log('Monthly Mood Summary:', monthlyMoodSummary.value);
   max-height: 200px;
   overflow-y: auto;
   padding-right: 10px;
-  margin-bottom: 15px; /* Add margin at the bottom */
+  margin-bottom: 15px;
+  /* Add margin at the bottom */
 }
 
 .assessment-list .assessment-item {
   padding: 10px;
   margin-bottom: 15px;
-  background-color: #f9f9f9; /* Lighter background for better contrast */
+  background-color: #f9f9f9;
+  /* Lighter background for better contrast */
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .assessment-item p {
-  white-space: pre-line; /* This will ensure that line breaks and spaces are respected */
+  white-space: pre-line;
+  /* This will ensure that line breaks and spaces are respected */
   margin-bottom: 10px;
   line-height: 1.6;
 }
 
 .assessment-item .assessment-date {
   font-size: 12px;
-  color: #6b7280; /* Light gray for the date text */
+  color: #6b7280;
+  /* Light gray for the date text */
 }
 
 /* Change input color to white */
 input[type="number"] {
-  background-color: white; /* Change the background to white */
-  color: black; /* Ensure the text is still visible */
-  border: 1px solid #ddd; /* Light gray border */
+  background-color: white;
+  /* Change the background to white */
+  color: black;
+  /* Ensure the text is still visible */
+  border: 1px solid #ddd;
+  /* Light gray border */
   border-radius: 6px;
   padding: 10px;
-  margin-top: 5px; /* Add some space between the input and label */
+  margin-top: 5px;
+  /* Add some space between the input and label */
 }
 
 input[type="number"]:focus {
   outline: none;
-  border-color: #3182ce; /* Blue border on focus */
-  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5); /* Focus shadow effect */
+  border-color: #3182ce;
+  /* Blue border on focus */
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+  /* Focus shadow effect */
 }
 
 
@@ -1132,9 +1322,9 @@ input[type="number"]:focus {
   height: 0;
   border-left: 5px solid transparent;
   border-right: 5px solid transparent;
-  border-top: 5px solid #a0aec0; /* Gray color */
+  border-top: 5px solid #a0aec0;
+  /* Gray color */
   pointer-events: none;
   transform: translateY(-50%);
 }
-
 </style>

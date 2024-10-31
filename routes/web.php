@@ -25,6 +25,8 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\TherapySessionController;
+use App\Http\Controllers\AvailableDateController;
+use App\Http\Controllers\AppointmentController;
 
 Route::get('/assessment', [DashboardController::class, 'getAssessment']);
 Route::post('/assessment', [DashboardController::class, 'storeAssessment']);
@@ -83,8 +85,13 @@ Route::get('/users/{user}/following', [FollowerController::class, 'fetchFollowin
 Route::post('/send-predefined-message', [ChatifyController::class, 'sendPredefinedMessage'])->name('send.predefined.message');
 Route::get('/users1', [ChatifyController::class, 'index1'])->name('users.index');
 Route::get('/users2', [DashboardController::class, 'index2'])->name('users.index2');
-
-
+Route::get('/available-dates', [AvailableDateController::class, 'index']);
+Route::post('/available-dates', [AvailableDateController::class, 'store']);
+Route::get('/available-dates/all', [AvailableDateController::class, 'getAvailableDates']);
+Route::put('/available-dates/{id}', [AvailableDateController::class, 'update'])->name('available-dates.update');
+Route::delete('/available-dates/{id}', [AvailableDateController::class, 'destroy'])->name('available-dates.destroy');
+Route::post('/appointments', [AppointmentController::class, 'store']);
+    Route::get('/therapist/appointments', [AppointmentController::class, 'indexForTherapist']);
 Route::middleware(['auth'])->group(function () {
     Route::post('/upload', [CollageController::class, 'upload'])->name('upload');
     Route::post('/api/save-collage-json', [CollageController::class, 'saveCollageJson']);
@@ -96,6 +103,8 @@ Route::middleware(['auth'])->group(function () {
 // Route::post('/users/{user}/unfollow', [FollowerController::class, 'unfollow'])->name('unfollowUser');
 
 Route::middleware(['auth', CheckRestriction::class])->group(function () {
+
+
 
     Route::get('/therapy-sessions', [TherapySessionController::class, 'index'])->name('therapy-sessions.index');
     Route::post('/therapy-sessions/{id}', [TherapySessionController::class, 'update'])->name('therapy-sessions.update');
