@@ -23,7 +23,6 @@
             </template>
           </q-card-section>
         </q-card>
-
         <q-card class="feelings-tracker-card">
           <q-card-section>
             <template v-if="isTherapist">
@@ -70,8 +69,10 @@
                     <q-btn label="Delete" @click="deleteDate(date.id)" />
                   </li>
                   <br/>
+
+                  
                   <h3>Appointments with clients</h3>
-                  <li v-for="appointment in appointments" :key="appointment.id">
+                  <li v-for="appointment in appointments" :key="appointment.id" @click="openAppointmentModal(appointment)" class="selectable-appointment">
                     <p>
                       Appointment with {{ appointment.user.name }} on {{ appointment.appointment_date }} at
                       {{ appointment.appointment_time }}
@@ -79,6 +80,84 @@
                   </li>
                 </ul>
               </div>
+              <!-- Appointment Management Modal -->
+              <q-dialog v-model="showAppointmentModal">
+  <q-card class="appointment-modal">
+    <q-card-section>
+      <h4>Manage Appointment</h4>
+      <p>Client: {{ selectedAppointment?.user?.name }}</p>
+      <p>Date: {{ selectedAppointment?.appointment_date }}</p>
+      <p>Time: {{ selectedAppointment?.appointment_time }}</p>
+
+      <!-- Link Input Field -->
+      <div class="link-input mt-4">
+        <label>Conference Link:</label>
+        <q-input v-model="appointmentLink" placeholder="Enter conference link" type="url" class="w-full mt-2" />
+      </div>
+      <q-btn label="Update Link" @click="updateAppointmentLink" color="primary" class="mt-2" />
+
+      <!-- Status Selection -->
+      <div class="status-selection mt-4">
+        <label>Status:</label>
+        <select v-model="selectedStatus" @change="handleStatusChange" class="w-full p-2 mt-2 border border-gray-300 rounded-lg">
+          <option value="" disabled>Select Status</option>
+          <option value="completed">Complete</option>
+          <option value="cancelled">Canceled</option>
+        </select>
+      </div>
+
+      <!-- Conditionally Display Session Report Fields When Status is "completed" -->
+      <div v-if="selectedStatus === 'completed'" class="session-report mt-4">
+        <h4>Session Report</h4>
+
+        <!-- Duration Field -->
+        <q-input v-model="sessionReport.duration" label="Duration of Session" type="number" />
+
+        <!-- Digital Activity Type Radio Buttons -->
+        <div class="activity-type mt-3">
+          <label>Type of Digital Activity Used:</label>
+          <q-option-group
+            v-model="sessionReport.activity_type"
+            :options="[ 
+              { label: 'Drawing', value: 'drawing' },
+              { label: 'Painting', value: 'painting' },
+              { label: 'Animation', value: 'animation' },
+              { label: 'Collage', value: 'collage' },
+              { label: 'Others', value: 'others' }
+            ]"
+            type="radio"
+          />
+          <q-input v-if="sessionReport.activity_type === 'others'" v-model="sessionReport.other_activity" label="Specify Other Activity" />
+        </div>
+
+        <!-- Engagement Level Selection -->
+        <div class="engagement-level mt-3">
+          <label>Patient Engagement Level:</label>
+          <q-option-group
+            v-model="sessionReport.engagement_level"
+            :options="[ 
+              { label: 'Not Engaged', value: 'not engaged' },
+              { label: 'Somewhat Engaged', value: 'somewhat engaged' },
+              { label: 'Moderately Engaged', value: 'moderately engaged' },
+              { label: 'Highly Engaged', value: 'highly engaged' }
+            ]"
+            type="radio"
+          />
+        </div>
+      </div>
+    </q-card-section>
+
+    <q-card-actions align="right">
+      <q-btn label="Close" @click="closeAppointmentModal" color="grey" />
+      <q-btn label="Update Status" @click="updateAppointmentStatus" color="primary" />
+    </q-card-actions>
+  </q-card>
+</q-dialog>
+
+
+
+
+
             </div>
             <div v-else>
               <h3>Available Appointment Dates</h3>
@@ -94,6 +173,33 @@
                 <p>No available dates at the moment.</p>
               </div>
             </div>
+            <div  >
+              <div v-if="isUser"class="appointments-list">
+    <h2>All Appointments</h2>
+    <ul v-if="appointments.length">
+      <li v-for="appointment in appointments" :key="appointment.id" class="appointment-item">
+        <!-- Display Time -->
+        <p><strong>Time:</strong> {{ appointment.appointment_time }}</p>
+        
+        <!-- Toggle Details Button -->
+        <button @click="toggleDetails(appointment.id)" class="details-toggle">
+          {{ showDetails[appointment.id] ? 'Hide Details' : 'Show Details' }}
+        </button>
+        
+        <!-- Conditional Details Section -->
+        <div v-show="showDetails[appointment.id]" class="appointment-details">
+          <p><strong>Link:</strong>
+            <a :href="appointment.link" target="_blank" v-if="appointment.link">{{ appointment.link }}</a>
+            <span v-else>No link available</span>
+          </p>
+          <p><strong>Status:</strong> {{ appointment.status }}</p>
+        </div>
+      </li>
+    </ul>
+    <p v-else>No appointments available.</p>
+  </div>
+            </div>
+
             <div v-if="isTherapist" class="mood-summary-section">
               <q-card class="mood-summary-card">
                 <q-card-section>
@@ -121,7 +227,6 @@
             </div>
           </q-card-section>
         </q-card>
-
         <q-card class="announcement-card">
           <q-card-section>
             <h3 class="text-lg font-semibold mb-3">Announcements</h3>
@@ -190,22 +295,7 @@
           </q-card-section>
         </q-card>
 
-        <div v-if="isTherapist">
-          <q-card class="update-session-card">
-            <q-card-section>
-              <h3 class="text-lg font-semibold mb-3">Update Sessions</h3>
-              <div class="mb-3">
-                <label class="text-md font-semibold">Sessions Done: </label>
-                <input type="number" v-model="sessionsDone" min="0" />
-              </div>
-              <div class="mb-3">
-                <label class="text-md font-semibold">Total Sessions: </label>
-                <input type="number" v-model="totalSessions" min="1" />
-              </div>
-              <q-btn label="Update Sessions" @click="updateTherapySessions" />
-            </q-card-section>
-          </q-card>
-        </div>
+
         <q-card class="assessment-card">
           <q-card-section>
             <h3 class="text-lg font-semibold mb-3">Assessment</h3>
@@ -263,13 +353,106 @@ import moment from 'moment';
 import ApexCharts from 'vue3-apexcharts';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 const CLIENT_ID_KEY = 'selectedClientId';
+const appointmentLink = ref(''); // Link for the appointment
 
 const appointments = ref([]);
+
 const availableDates = ref([]);
 const availableDatesForClient = ref([]);
 const newAvailableDate = ref('');
 const newAvailableTime = ref('');
 const selectedDateId = ref(null);
+const showAppointmentModal = ref(false);
+const selectedAppointment = ref(null);
+const selectedStatus = ref('');
+const openAppointmentModal = (appointment) => {
+  selectedAppointment.value = appointment;
+  showAppointmentModal.value = true;
+  selectedStatus.value = ''; // Reset status
+  appointmentLink.value = appointment.link || ''; // Load existing link if any
+};
+const fetchPendingAppointments = async () => {
+  try {
+    const response = await axios.get('/users/all-appointments');
+    // Assign all appointments to `appointments` without filtering
+    appointments.value = response.data.appointments; // Note: Using "appointments" from the response
+
+  } catch (error) {
+    console.error('Failed to fetch appointments:', error);
+  }
+};
+
+const handleStatusChange = () => {
+  if (selectedStatus.value === 'completed') {
+    // Reset session report fields if status is set to completed
+    sessionReport.value = {
+      duration: null,
+      activity_type: '',
+      other_activity: '',
+      engagement_level: ''
+    };
+  }
+};
+
+const updateAppointmentStatus = async () => {
+  if (!selectedAppointment.value || !selectedStatus.value) {
+    toast.error('Please select a status to update.');
+    return;
+  }
+
+  try {
+    const payload = {
+      status: selectedStatus.value,
+      link: appointmentLink.value,
+    };
+
+    // Update appointment status and link
+    await axios.put(`/appointments/${selectedAppointment.value.id}`, payload);
+    
+    // If the status is "completed" and there's a session report, trigger the session report creation
+    if (selectedStatus.value === 'completed' && sessionReport.value.duration) {
+      await axios.post(`/appointments/${selectedAppointment.value.id}/session-report`, {
+        duration: sessionReport.value.duration,
+        activity_type: sessionReport.value.activity_type,
+        other_activity: sessionReport.value.other_activity,
+        engagement_level: sessionReport.value.engagement_level,
+      });
+      toast.success('Session report submitted successfully.');
+    }
+
+    toast.success('Appointment status updated successfully.');
+    closeAppointmentModal();
+    fetchAppointments(); // Refresh appointments list
+  } catch (error) {
+    toast.error('Failed to update appointment status.');
+  }
+};
+
+
+
+
+const updateAppointmentLink = async () => {
+  if (!selectedAppointment.value) {
+    toast.error('No appointment selected.');
+    return;
+  }
+
+  try {
+    await axios.put(`/appointments/${selectedAppointment.value.id}/link`, {
+      link: appointmentLink.value, // Only update the link
+    });
+    toast.success('Appointment link updated successfully.');
+    fetchAppointments(); // Refresh appointments list to show updated link
+  } catch (error) {
+    toast.error('Failed to update appointment link.');
+  }
+};
+
+const closeAppointmentModal = () => {
+  showAppointmentModal.value = false;
+  selectedAppointment.value = null;
+  selectedStatus.value = '';
+};
 
 const fetchAppointments = async () => {
   try {
@@ -401,7 +584,7 @@ const { auth } = usePage().props;
 const authUser = computed(() => auth.user || null);
 console.log("auth.user:", auth.user);
 const { props } = usePage();
-
+const showDetails = ref({});
 const showAssessmentModal = ref(false);
 
 
@@ -411,7 +594,9 @@ const openModal = (assessment = null) => {
   assessmentComment.value = assessment ? assessment.comment : '';  // Populate the comment if editing
   showAssessmentModal.value = true;
 };
-
+const toggleDetails = (id) => {
+      showDetails.value[id] = !showDetails.value[id];
+    };
 // Close the modal
 const closeModal = () => {
   showAssessmentModal.value = false;
@@ -422,6 +607,14 @@ const closeModal = () => {
 const roles = auth.user?.roles.map((role) => role.name) || [];
 
 console.log("role of user:", roles[0]);
+const sessionReport = ref({
+  duration: null,
+  activity_type: '',
+  other_activity: '',
+  engagement_level: ''
+});
+
+
 
 // Reactive references
 const selectedDate = ref(new Date().toISOString().substr(0, 10));
@@ -456,6 +649,11 @@ const form = useForm({
 const isTherapist = computed(() => {
   return roles.includes("therapist");
 });
+const isUser = computed(() => {
+  return roles.includes("user");
+});
+
+
 
 const clientId = ref(isTherapist.value ? localStorage.getItem(CLIENT_ID_KEY) || '' : authUser.value.id);
 const assessments = ref([]);
@@ -582,6 +780,7 @@ const fetchTherapySessionData = async (userId = null) => {
     toast.error('Failed to fetch therapy session data.');
   }
 };
+
 
 // Fetch moods from the backend
 const fetchMoods = async () => {
@@ -847,50 +1046,7 @@ const fetchUserList = async () => {
 };
 
 // Update session progress for the selected user (therapist only)
-const updateTherapySessions = async () => {
-  const sessionsDoneInt = parseInt(sessionsDone.value, 10);
-  const totalSessionsInt = parseInt(totalSessions.value, 10);
 
-  // Ensure total sessions and sessions done are valid integers
-  if (isNaN(sessionsDoneInt) || isNaN(totalSessionsInt)) {
-    toast.error('Both "Sessions Done" and "Total Sessions" must be valid numbers.');
-    return;
-  }
-
-  // Handle the special case of 0/0
-  if (sessionsDoneInt === 0 && totalSessionsInt === 0) {
-    toast.error('Both "Sessions Done" and "Total Sessions" cannot be 0.');
-    return;
-  }
-
-  // Validate that sessions_done does not exceed total_sessions
-  if (sessionsDoneInt > totalSessionsInt) {
-    toast.error('"Sessions Done" cannot exceed "Total Sessions."');
-    return;
-  }
-
-  try {
-    const response = await axios.post(`/therapy-sessions/${clientId.value}`, {
-      sessions_done: sessionsDoneInt,
-      total_sessions: totalSessionsInt,
-    });
-
-    if (response.status === 200) {
-      toast.success('Therapy session updated successfully.');
-    } else {
-      toast.error('Failed to update therapy session. Please try again.');
-    }
-  } catch (error) {
-    console.error('Error updating therapy session:', error);
-
-    // Handle 403 unauthorized errors explicitly
-    if (error.response && error.response.status === 403) {
-      toast.error('You are not authorized to update this session.');
-    } else {
-      toast.error('Failed to update therapy session. Please try again later.');
-    }
-  }
-};
 const formatDate = (dateObj) => {
   // Extract date parts from dateObj.date (YYYY-MM-DD format)
   const [year, month, day] = dateObj.date.split('-').map(part => parseInt(part, 10));
@@ -924,10 +1080,12 @@ onMounted(async () => {
 
       fetchMoods();
       updateCalendarAttributes();
+      await fetchAppointments();
       await fetchTherapySessionData(authUser.value.id);
       await fetchAssessmentComment(authUser.value.id);
       await fetchAnnouncements();
       await fetchTherapySessionData(clientId.value || authUser.value.id); // Ensure the session data is also fetched
+      await fetchPendingAppointments();
     }
     fetchAvailableDates();
     fetchAvailableDatesForClient();
@@ -1326,4 +1484,15 @@ input[type="number"]:focus {
   pointer-events: none;
   transform: translateY(-50%);
 }
+.selectable-appointment {
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 5px;
+  transition: background-color 0.3s;
+}
+
+.selectable-appointment:hover {
+  background-color: #f1f5f9; /* Light gray to indicate hover */
+}
+
 </style>

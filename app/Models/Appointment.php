@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Appointment extends Model
 {
-    protected $fillable = ['user_id', 'therapist_id', 'appointment_date', 'appointment_time'];
+    protected $fillable = ['user_id', 'therapist_id', 'appointment_date', 'appointment_time', 'status', 'link'];
 
     public function user() {
         return $this->belongsTo(User::class);
@@ -15,5 +15,9 @@ class Appointment extends Model
 
     public function therapist() {
         return $this->belongsTo(User::class, 'therapist_id');
+    }
+    public function sessionReport()
+    {
+        return $this->hasOne(SessionReport::class);
     }
 }

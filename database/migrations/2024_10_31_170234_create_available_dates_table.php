@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('therapist_id')->constrained('users')->onDelete('cascade');
             $table->date('date');
+            $table->boolean('is_booked')->default(false); // Flag to indicate if the date is booked
             $table->timestamps();
         });
     }

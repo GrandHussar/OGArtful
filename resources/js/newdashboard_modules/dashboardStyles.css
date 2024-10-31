@@ -1,0 +1,382 @@
+.ticketing-system {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .mood-selection {
+    max-width: 1000px;
+    margin: 0 auto;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background-color: #ffffff;
+  }
+  
+  .update-session-card {
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    background-color: #ffffff;
+  
+  }
+  
+  .dashboard-container {
+    display: flex;
+    justify-content: center;
+    gap: 50px;
+    /* Space between the main content and right column */
+    padding: 50px 20px;
+    /* Add padding to the container */
+  }
+  
+  /* Improve assessment spacing */
+  .assessment-list {
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 10px;
+    margin-bottom: 15px;
+    /* Add margin at the bottom */
+  }
+  
+  .assessment-list .assessment-item {
+    padding: 10px;
+    margin-bottom: 15px;
+    background-color: #f9f9f9;
+    /* Lighter background for better contrast */
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .assessment-item p {
+    white-space: pre-line;
+    /* This will ensure that line breaks and spaces are respected */
+    margin-bottom: 10px;
+    line-height: 1.6;
+  }
+  
+  .assessment-item .assessment-date {
+    font-size: 12px;
+    color: #6b7280;
+    /* Light gray for the date text */
+  }
+  
+  /* Change input color to white */
+  input[type="number"] {
+    background-color: white;
+    /* Change the background to white */
+    color: black;
+    /* Ensure the text is still visible */
+    border: 1px solid #ddd;
+    /* Light gray border */
+    border-radius: 6px;
+    padding: 10px;
+    margin-top: 5px;
+    /* Add some space between the input and label */
+  }
+  
+  input[type="number"]:focus {
+    outline: none;
+    border-color: #3182ce;
+    /* Blue border on focus */
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+    /* Focus shadow effect */
+  }
+  
+  
+  .main-content {
+    flex: 1;
+    max-width: 700px;
+    /* Adjust based on your desired width for the Card content */
+  }
+  
+  .right-column {
+    width: 400px;
+    flex-shrink: 0;
+    /* Prevent the right column from shrinking */
+  }
+  
+  /* Media query to stack the right column on top of the main content on small screens */
+  @media (max-width: 1024px) {
+    .dashboard-container {
+      flex-direction: column;
+      /* Stack the columns vertically */
+      padding: 50px 20px;
+      /* Ensure padding remains on smaller screens */
+      gap: 20px;
+      /* Adjust the gap between the stacked elements */
+    }
+  
+    .main-content {
+      max-width: 100%;
+      /* Allow the main content to take full width */
+      margin: 0 auto;
+      /* Center the main content */
+    }
+  
+    .right-column {
+      width: 100%;
+      /* Allow the right column to take full width */
+      order: -1;
+      /* Move the right column above the main content */
+    }
+  }
+  
+  .announcement-card {
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    background-color: #ffffff;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  
+  /* Card styles */
+  .q-btn {
+    margin-right: 10px;
+  }
+  
+  .q-btn.text-blue-500 {
+    color: #3490dc;
+  }
+  
+  .q-btn.text-red-500 {
+    color: #e3342f;
+  }
+  
+  .welcome-card,
+  .feelings-tracker-card,
+  .progress-card,
+  .assessment-card {
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    background-color: #ffffff;
+  }
+  
+  .feelings-tracker-icons {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 10px;
+  }
+  
+  .feelings-icons {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .announcements-list {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .announcement-card li {
+    margin-bottom: 5px;
+  }
+  
+  /* Progress section */
+  .progress-header {
+    text-align: center;
+  }
+  
+  .progress-info {
+    text-align: center;
+    margin-top: 10px;
+  }
+  
+  .book-session-btn {
+    margin-top: 20px;
+    width: 100%;
+  }
+  
+  .assessment-bar {
+    background-color: #ddd;
+    height: 20px;
+    margin-top: 10px;
+    border-radius: 5px;
+  }
+  
+  .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+    /* Ensure it's above other elements */
+  }
+  
+  .modal-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+  }
+  
+  .mood-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .mood-button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-top: 10px;
+  }
+  
+  .mood-happy {
+    background-color: #d6f6ff;
+    /* Light blue */
+  }
+  
+  .mood-sad {
+    background-color: #b3f5bc;
+    /* Light green */
+  }
+  
+  .mood-neutral {
+    background-color: #f9ffb5;
+  }
+  
+  .mood-excited {
+    background-color: #fa9189;
+  }
+  
+  .mood-angry {
+    background-color: #e2cbf7;
+  
+  }
+  
+  .mood-happy .label,
+  .mood-neutral .label,
+  .mood-excited .label,
+  .mood-sad .label,
+  .mood-angry .label {
+    color: black;
+    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+  }
+  
+  
+  /* Add more mood-specific styles as needed */
+  
+  /* Loading Spinner */
+  .loading-spinner {
+    /* Style your loading spinner */
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.5rem;
+    color: #555;
+  }
+  
+  /* Error Messages */
+  .error-messages {
+    color: red;
+    margin-top: 10px;
+  }
+  
+  @keyframes wave {
+    0% {
+      transform: rotate(0deg);
+    }
+  
+    25% {
+      transform: rotate(25deg);
+    }
+  
+    0% {
+      transform: rotate(0deg);
+    }
+  
+    75% {
+      transform: rotate(-25deg);
+    }
+  
+    100% {
+      transform: rotate(0deg);
+    }
+  }
+  
+  .wave .emoji {
+    font-size: 28px;
+    display: inline-block;
+    animation: wave 0.3s ease-in-out 4;
+    animation-direction: alternate;
+  }
+  
+  .mood-options {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+  }
+  
+  .mood-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    margin: 0 auto;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 10px 20px;
+    font-size: 1rem;
+  
+  }
+  
+  .mood-container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
+  }
+  
+  
+  .emoji {
+    font-size: 50px;
+    /* Enlarge the emoji */
+    margin-bottom: 5px;
+  
+  }
+  
+  .emoji:hover {
+    font-size: 50px;
+    /* Enlarge the emoji */
+    margin-bottom: 5px;
+    animation: wave 0.5s
+  }
+  
+  .label {
+    font-size: 14px;
+    /* Smaller label */
+    color: white;
+  }
+  
+  
+  .month-picker-arrow {
+    position: absolute;
+    top: 50%;
+    right: 13px;
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid #a0aec0;
+    /* Gray color */
+    pointer-events: none;
+    transform: translateY(-50%);
+  }
