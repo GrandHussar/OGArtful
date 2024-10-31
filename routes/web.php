@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\TherapySessionController;
 use App\Http\Controllers\AvailableDateController;
 use App\Http\Controllers\AppointmentController;
+use App\Http\Controllers\SessionReportController;
 
 Route::get('/assessment', [DashboardController::class, 'getAssessment']);
 Route::post('/assessment', [DashboardController::class, 'storeAssessment']);
@@ -91,6 +92,15 @@ Route::get('/available-dates/all', [AvailableDateController::class, 'getAvailabl
 Route::put('/available-dates/{id}', [AvailableDateController::class, 'update'])->name('available-dates.update');
 Route::delete('/available-dates/{id}', [AvailableDateController::class, 'destroy'])->name('available-dates.destroy');
 Route::post('/appointments', [AppointmentController::class, 'store']);
+Route::put('/appointments/{id}', [AppointmentController::class, 'updateStatus']);
+Route::put('/appointments/{id}/link', [AppointmentController::class, 'updateLink']);
+// web.php
+Route::get('/users/all-appointments', [AppointmentController::class, 'allAppointmentsIndex'])->middleware('auth');
+Route::post('/appointments/{appointmentId}/session-report', [SessionReportController::class, 'store'])
+    ->middleware('auth');
+Route::get('/users/pending-appointments', [AppointmentController::class, 'pendingAppointmentsIndex'])
+    ->middleware('auth');
+
     Route::get('/therapist/appointments', [AppointmentController::class, 'indexForTherapist']);
 Route::middleware(['auth'])->group(function () {
     Route::post('/upload', [CollageController::class, 'upload'])->name('upload');

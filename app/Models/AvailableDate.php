@@ -9,7 +9,7 @@ class AvailableDate extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['therapist_id', 'date', 'time'];
+    protected $fillable = ['therapist_id', 'date', 'time','is_booked'];
 
     public function therapist()
     {
