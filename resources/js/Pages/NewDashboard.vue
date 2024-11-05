@@ -26,7 +26,7 @@
         <q-card class="feelings-tracker-card">
           <q-card-section>
             <template v-if="isTherapist">
-              <h3 class="text-lg font-semibold mb-3">Feelings Tracker for </h3>
+              <h3 class="text-lg font-semibold mb-3">Feelings Tracker</h3>
               <p class="text-sm">The client's calendar</p>
             </template>
             <template v-else>
@@ -55,254 +55,6 @@
                 </q-card-actions>
               </q-card>
             </q-dialog>
-            <div v-if="isTherapist">
-              <h3>Available Dates for Appointments</h3>
-              <q-input v-model="newAvailableDate" label="Select Date" type="date" />
-              <q-input v-model="newAvailableTime" label="Select Time" type="time" />
-              <q-btn label="Save Date" @click="saveAvailableDate" />
-              <div v-if="availableDates.length" class="mt-4">
-                <p>Available Dates:</p>
-                <ul>
-                  <li v-for="date in availableDates" :key="date.id">
-                    {{ formatDate(date) }}
-
-                    <q-btn label="Delete" @click="deleteDate(date.id)" />
-                  </li>
-                  <br/>
-
-                  
-                  <h3>Appointments with clients</h3>
-                  <li v-for="appointment in appointments" :key="appointment.id" @click="openAppointmentModal(appointment)" class="selectable-appointment">
-                    <p>
-                      Appointment with {{ appointment.user.name }} on {{ appointment.appointment_date }} at
-                      {{ appointment.appointment_time }}
-                    </p>
-                  </li>
-                </ul>
-              </div>
-              <!-- Appointment Management Modal -->
-              <q-dialog v-model="showAppointmentModal">
-  <q-card class="appointment-modal">
-    <q-card-section>
-      <h4>Manage Appointment</h4>
-      <p>Client: {{ selectedAppointment?.user?.name }}</p>
-      <p>Date: {{ selectedAppointment?.appointment_date }}</p>
-      <p>Time: {{ selectedAppointment?.appointment_time }}</p>
-
-      <!-- Link Input Field -->
-      <div class="link-input mt-4">
-        <label>Conference Link:</label>
-        <q-input v-model="appointmentLink" placeholder="Enter conference link" type="url" class="w-full mt-2" />
-      </div>
-      <q-btn label="Update Link" @click="updateAppointmentLink" color="primary" class="mt-2" />
-
-      <div class="status-selection mt-4">
-      <label>Status:</label>
-      <select v-model="selectedStatus" @change="handleStatusChange" class="w-full p-2 mt-2 border border-gray-300 rounded-lg">
-        <option value="" disabled>Select Status</option>
-        <option value="completed">Complete</option>
-        <option value="cancelled">Canceled</option>
-      </select>
-    </div>
-
-    <!-- Conditionally Show Button for Feedback Form When Status is "completed" -->
-    <q-btn v-if="selectedStatus === 'completed'" label="Open Feedback Form" color="primary" @click="showFeedbackForm = true" />
-
-    <!-- Pop-Out Feedback Form Dialog -->
-  <!-- Feedback Form Modal -->
-  <q-dialog v-model="showFeedbackForm" persistent>
-    <q-card class="feedback-form-card">
-      <q-card-section>
-        <h2 class="form-title">Art Therapist Feedback Form: Digital Art Therapy Session</h2>
-
-        <!-- Therapist and Patient Information -->
-        <p>Therapist Name: <q-input v-model="feedbackForm.therapist_name" /></p>
-        <p>Patient Name: <q-input v-model="feedbackForm.patient_name" /></p>
-        <p>Date of Session: <q-input v-model="feedbackForm.session_date" type="date" /></p>
-
-        <!-- Session Overview -->
-        <h3>1. Session Overview</h3>
-        <q-input v-model="feedbackForm.duration" label="Duration of Session (minutes)" type="number" />
-        <q-option-group
-          v-model="feedbackForm.activity_type"
-          :options="[
-            { label: 'Drawing', value: 'drawing' },
-            { label: 'Mindful Coloring', value: 'painting' },
-            { label: 'Collage', value: 'collage' },
-            { label: 'Animation', value: 'animation' },
-            { label: 'Other', value: 'other' }
-          ]"
-          type="radio"
-        />
-
-        <!-- Patient’s Engagement Level -->
-        <h3>2. Patient’s Engagement Level</h3>
-        <q-option-group
-          v-model="feedbackForm.engagement_level"
-          :options="[
-            { label: 'Highly Engaged', value: 'highly engaged' },
-            { label: 'Moderately Engaged', value: 'moderately engaged' },
-            { label: 'Somewhat Engaged', value: 'somewhat engaged' },
-            { label: 'Not Engaged', value: 'not engaged' }
-          ]"
-          type="radio"
-        />
-
-        <!-- Observed Emotions During the Session -->
-        <h3>3. Observed Emotions During the Session</h3>
-        <q-option-group
-          v-model="feedbackForm.observed_emotions"
-          :options="[
-            { label: 'Joy', value: 'joy' },
-            { label: 'Sadness', value: 'sadness' },
-            { label: 'Frustration', value: 'frustration' },
-            { label: 'Anxiety', value: 'anxiety' },
-            { label: 'Calmness', value: 'calmness' },
-            { label: 'Anger', value: 'anger' }
-          ]"
-          type="checkbox"
-        />
-        <q-input v-if="feedbackForm.observed_emotions.includes('other')" v-model="feedbackForm.other_emotion" label="Other Emotion" />
-
-        <!-- Patient’s Artistic Expression -->
-        <h3>4. Patient’s Artistic Expression</h3>
-        <q-option-group
-          v-model="feedbackForm.artistic_quality"
-          :options="[
-            { label: 'Excellent', value: 'excellent' },
-            { label: 'Good', value: 'good' },
-            { label: 'Fair', value: 'fair' },
-            { label: 'Poor', value: 'poor' }
-          ]"
-          type="radio"
-        />
-        <h3>5. Patient’s Artistic Theme</h3>
-        <q-option-group
-          v-model="feedbackForm.artwork_theme"
-          :options="[
-            { label: 'Positive', value: 'positive' },
-            { label: 'Negative', value: 'negative' },
-            { label: 'Neutral', value: 'neutral' },
-            { label: 'Other', value: 'other' }
-          ]"
-          type="radio"
-        />
-        <q-input v-if="feedbackForm.artwork_theme === 'other'" v-model="feedbackForm.other_theme" label="Other Theme" />
-
-        <!-- Insights Gained from the Session -->
-        <h3>6. Insights Gained from the Session</h3>
-        <q-option-group
-          v-model="feedbackForm.shared_significant_thoughts"
-          :options="[
-            { label: 'Yes', value: true },
-            { label: 'No', value: false }
-          ]"
-          type="radio"
-        />
-        <q-input v-if="feedbackForm.shared_significant_thoughts" v-model="feedbackForm.thoughts_detail" label="If yes, please elaborate" />
-
-        <!-- Therapeutic Techniques Used -->
-        <h3>7. Therapeutic Techniques Used</h3>
-        <q-option-group
-          v-model="feedbackForm.therapeutic_techniques"
-          :options="[
-            { label: 'Guided Imagery', value: 'guided_imagery' },
-            { label: 'Cognitive Behavioral Techniques', value: 'cbt' },
-            { label: 'Emotion Regulation Skills', value: 'emotion_regulation' },
-            { label: 'Other', value: 'other' }
-          ]"
-          type="checkbox"
-        />
-        <q-input v-if="feedbackForm.therapeutic_techniques.includes('other')" v-model="feedbackForm.other_technique" label="Other Technique" />
-
-        <!-- Overall Assessment of Patient’s Mental State -->
-        <h3>8. Overall Assessment of Patient’s Mental State</h3>
-        <q-option-group
-          v-model="feedbackForm.mental_state"
-          :options="[
-            { label: 'Improved', value: 'improved' },
-            { label: 'Stable', value: 'stable' },
-            { label: 'Deteriorated', value: 'deteriorated' }
-          ]"
-          type="radio"
-        />
-
-        <!-- Recommendations for Future Sessions -->
-        <h3>9. Recommendations for Future Sessions</h3>
-        <q-input v-model="feedbackForm.recommendations" type="textarea" rows="3" />
-
-        <!-- Additional Notes or Observations -->
-        <h3>10. Additional Notes or Observations</h3>
-        <q-input v-model="feedbackForm.additional_notes" type="textarea" rows="3" />
-
-        <!-- Therapist Signature -->
-        <p>Therapist Signature: <q-input v-model="feedbackForm.therapist_signature" /></p>
-      </q-card-section>
-
-      <!-- Form Actions -->
-      <q-card-actions align="right">
-        <q-btn label="Cancel" color="grey" @click="closeFeedbackForm" />
-        <q-btn label="Submit" color="primary" @click="submitFeedbackForm" />
-      </q-card-actions>
-    </q-card>
-  </q-dialog>
-
-
-    </q-card-section>
-
-    <q-card-actions align="right">
-      <q-btn label="Close" @click="closeAppointmentModal" color="grey" />
-      <q-btn label="Update Status" @click="updateAppointmentStatus" color="primary" />
-    </q-card-actions>
-  </q-card>
-</q-dialog>
-
-
-
-
-
-            </div>
-            <div v-else>
-              <h3>Available Appointment Dates</h3>
-              <div v-if="availableDates.length">
-                <ul>
-                  <li v-for="date in availableDates" :key="date.id">
-                    {{ formatDate(date) }}
-                    <q-btn label="Pick Date" @click="requestAppointment(date)" />
-                  </li>
-                </ul>
-              </div>
-              <div v-else>
-                <p>No available dates at the moment.</p>
-              </div>
-            </div>
-            <div  >
-              <div v-if="isUser"class="appointments-list">
-    <h2>All Appointments</h2>
-    <ul v-if="appointments.length">
-      <li v-for="appointment in appointments" :key="appointment.id" class="appointment-item">
-        <!-- Display Time -->
-        <p><strong>Time:</strong> {{ appointment.appointment_time }}</p>
-        
-        <!-- Toggle Details Button -->
-        <button @click="toggleDetails(appointment.id)" class="details-toggle">
-          {{ showDetails[appointment.id] ? 'Hide Details' : 'Show Details' }}
-        </button>
-        
-        <!-- Conditional Details Section -->
-        <div v-show="showDetails[appointment.id]" class="appointment-details">
-          <p><strong>Link:</strong>
-            <a :href="appointment.link" target="_blank" v-if="appointment.link">{{ appointment.link }}</a>
-            <span v-else>No link available</span>
-          </p>
-          <p><strong>Status:</strong> {{ appointment.status }}</p>
-        </div>
-      </li>
-    </ul>
-    <p v-else>No appointments available.</p>
-  </div>
-            </div>
-
             <div v-if="isTherapist" class="mood-summary-section">
               <q-card class="mood-summary-card">
                 <q-card-section>
@@ -314,6 +66,7 @@
                     <span class="month-picker-arrow"></span>
                   </div>
                   <ApexCharts type="pie" :options="chartOptions" :series="monthlyMoodSummary" />
+
                 </q-card-section>
               </q-card>
             </div>
@@ -361,8 +114,8 @@
 
                   <!-- Edit and Delete Buttons -->
                   <button @click="editAnnouncement(announcement)" class="text-blue-500 hover:underline">Edit</button>
-                  <button @click="deleteAnnouncement(announcement.id)"
-                    class="text-red-500 hover:underline ml-3">Delete</button>
+                  <q-btn @click="deleteAnnouncement(announcement.id)"
+                    class="text-red-500 hover:underline ml-3">Delete</q-btn>
                 </li>
               </ul>
             </template>
@@ -372,7 +125,7 @@
                 <li v-for="announcement in allAnnouncements" :key="announcement.id" class="mb-4">
                   <h4 class="text-md font-semibold">{{ announcement.title }}</h4>
                   <p class="text-sm text-gray-500">By {{ announcement.therapist.name }} on {{
-                    formatDate(announcement.created_at) }}</p>
+                    formatDate(announcement.created_at) }} {{ date.time }}</p>
                   <p class="text-sm">{{ announcement.content }}</p>
                 </li>
               </ul>
@@ -404,7 +157,7 @@
             <h3 class="text-lg font-semibold mb-3">Assessment</h3>
             <!-- For Therapist -->
             <div v-if="isTherapist">
-              <q-btn label="Add New Assessment" @click="openModal()" class="mb-3" color="primary" />
+              <q-btn rounded label="Add New Assessment" @click="openModal()" class="mb-3" color="positive" />
               <q-dialog v-model="showAssessmentModal">
                 <q-card>
                   <q-card-section>
@@ -427,8 +180,6 @@
                 <p class="assessment-date">Therapist: {{ assessment.therapist_name }} | Date: {{ assessment.created_at
                   }}
                 </p>
-
-
                 <!-- Therapist Edit/Delete Actions -->
                 <div v-if="isTherapist">
                   <q-btn label="Edit" @click="editAssessment(assessment)" class="text-blue-500 hover:underline" />
@@ -440,6 +191,278 @@
             <div v-else class="text-gray-500">
               <p>No assessment comments yet.</p>
             </div>
+          </q-card-section>
+        </q-card>
+
+        <q-card class="assessment-card">
+          <q-card-section>
+            <div v-if="isTherapist">
+              <h3 class="text-lg font-semibold mb-3">Available Dates for Appointments</h3>
+              <q-input v-model="newAvailableDate" label="Select Date" type="date" />
+              <q-input v-model="newAvailableTime" label="Select Time" type="time" />
+              <div class="mt-3 flex justify-end">
+                <q-btn color="positive" rounded label="Save Date" @click="saveAvailableDate" />
+              </div>
+              <div v-if="availableDates.length" class="mt-4">
+                <p class="text-lg font-semibold mb-3">Available Dates:</p>
+                <ul>
+                  <li v-for="date in availableDates" :key="date.id">
+                    {{ formatDate(date) }} at {{ date.time }}
+
+                    <q-btn label="Delete" @click="deleteDate(date.id)" class="text-red-500 hover:underline ml-6" />
+                  </li>
+                </ul>
+              </div>
+              <br />
+              <h3 class="text-lg font-semibold mb-3">Appointments with clients:</h3>
+              <template v-if="appointments.length >= 1">
+                <li v-for="appointment in appointments" :key="appointment.id" @click="openAppointmentModal(appointment)"
+                  class="selectable-appointment mb-3">
+                  <p>Appointment with {{ appointment.user.name }} on {{ appointment.appointment_date }} at
+                    {{ convertTo12HourFormat(appointment.appointment_time) }}
+                  </p>
+                </li>
+              </template>
+              <template v-else>
+                <p>No appointments available.</p>
+              </template>
+              <!-- Appointment Management Modal -->
+              <q-dialog v-model="showAppointmentModal">
+                <q-card class="appointment-modal">
+                  <q-card-section>
+                    <h4 class="mb-4 border-bottom">Manage Appointment</h4>
+                    <p>Client: {{ selectedAppointment?.user?.name }}</p>
+                    <p>Date: {{ selectedAppointment?.appointment_date }}</p>
+                    <p>Time: {{ selectedAppointment?.appointment_time }}</p>
+
+                    <!-- Link Input Field -->
+                    <div class="link-input mt-4">
+                      <label>Conference Link:</label>
+                      <q-input v-model="appointmentLink" placeholder="Enter conference link" type="url"
+                        class="w-full mt-2" />
+                    </div>
+                    <q-btn rounded label="Update Link" @click="updateAppointmentLink" color="primary" class="mt-2"
+                      padding="xs md" />
+
+                    <div class="status-selection mt-4">
+                      <label>Status:</label>
+                      <select v-model="selectedStatus" @change="handleStatusChange"
+                        class="w-full p-2 mt-2 border border-gray-300 rounded-lg">
+                        <option value="" disabled>Select Status</option>
+                        <option value="completed">Complete</option>
+                        <option value="cancelled">Canceled</option>
+                      </select>
+                    </div>
+
+                    <!-- Conditionally Show Button for Feedback Form When Status is "completed" -->
+                    <q-btn rounded v-if="selectedStatus === 'completed'" label="Open Feedback Form" color="primary"
+                      @click="showFeedbackForm = true" class="mt-5" padding="xs md" />
+
+                    <!-- Pop-Out Feedback Form Dialog -->
+                    <!-- Feedback Form Modal -->
+                    <q-dialog v-model="showFeedbackForm" persistent>
+                      <q-card class="feedback-form-card">
+                        <q-card-section>
+                          <h2 class="form-title">Art Therapist Feedback Form: Digital Art Therapy Session</h2>
+
+                          <!-- Therapist and Patient Information -->
+                          <p>Therapist Name: <q-input v-model="feedbackForm.therapist_name" /></p>
+                          <p>Patient Name: <q-input v-model="feedbackForm.patient_name" /></p>
+                          <p>Date of Session: <q-input v-model="feedbackForm.session_date" type="date" /></p>
+
+                          <!-- Session Overview -->
+                          <h3 class="text-lg font-semibold mb-3">1. Session Overview</h3>
+                          <q-input v-model="feedbackForm.duration" label="Duration of Session (minutes)"
+                            type="number" />
+                          <q-option-group v-model="feedbackForm.activity_type" :options="[
+                            { label: 'Drawing', value: 'drawing' },
+                            { label: 'Mindful Coloring', value: 'painting' },
+                            { label: 'Collage', value: 'collage' },
+                            { label: 'Animation', value: 'animation' },
+                            { label: 'Other', value: 'other' }
+                          ]" type="radio" />
+
+                          <!-- Patient’s Engagement Level -->
+                          <h3 class="text-lg font-semibold mb-3">2. Patient’s Engagement Level</h3>
+                          <q-option-group v-model="feedbackForm.engagement_level" :options="[
+                            { label: 'Highly Engaged', value: 'highly engaged' },
+                            { label: 'Moderately Engaged', value: 'moderately engaged' },
+                            { label: 'Somewhat Engaged', value: 'somewhat engaged' },
+                            { label: 'Not Engaged', value: 'not engaged' }
+                          ]" type="radio" />
+
+                          <!-- Observed Emotions During the Session -->
+                          <h3 class="text-lg font-semibold mb-3">3. Observed Emotions During the Session</h3>
+                          <q-option-group v-model="feedbackForm.observed_emotions" :options="[
+                            { label: 'Joy', value: 'joy' },
+                            { label: 'Sadness', value: 'sadness' },
+                            { label: 'Frustration', value: 'frustration' },
+                            { label: 'Anxiety', value: 'anxiety' },
+                            { label: 'Calmness', value: 'calmness' },
+                            { label: 'Anger', value: 'anger' }
+                          ]" type="checkbox" />
+                          <q-input v-if="feedbackForm.observed_emotions.includes('other')"
+                            v-model="feedbackForm.other_emotion" label="Other Emotion" />
+
+                          <!-- Patient’s Artistic Expression -->
+                          <h3 class="text-lg font-semibold mb-3">4. Patient’s Artistic Expression</h3>
+                          <q-option-group v-model="feedbackForm.artistic_quality" :options="[
+                            { label: 'Excellent', value: 'excellent' },
+                            { label: 'Good', value: 'good' },
+                            { label: 'Fair', value: 'fair' },
+                            { label: 'Poor', value: 'poor' }
+                          ]" type="radio" />
+                          <h3 class="text-lg font-semibold mb-3">5. Patient’s Artistic Theme</h3>
+                          <q-option-group v-model="feedbackForm.artwork_theme" :options="[
+                            { label: 'Positive', value: 'positive' },
+                            { label: 'Negative', value: 'negative' },
+                            { label: 'Neutral', value: 'neutral' },
+                            { label: 'Other', value: 'other' }
+                          ]" type="radio" />
+                          <q-input v-if="feedbackForm.artwork_theme === 'other'" v-model="feedbackForm.other_theme"
+                            label="Other Theme" />
+
+                          <!-- Insights Gained from the Session -->
+                          <h3 class="text-lg font-semibold mb-3">6. Insights Gained from the Session</h3>
+                          <q-option-group v-model="feedbackForm.shared_significant_thoughts" :options="[
+                            { label: 'Yes', value: true },
+                            { label: 'No', value: false }
+                          ]" type="radio" />
+                          <q-input v-if="feedbackForm.shared_significant_thoughts"
+                            v-model="feedbackForm.thoughts_detail" label="If yes, please elaborate" />
+
+                          <!-- Therapeutic Techniques Used -->
+                          <h3 class="text-lg font-semibold mb-3">7. Therapeutic Techniques Used</h3>
+                          <q-option-group v-model="feedbackForm.therapeutic_techniques" :options="[
+                            { label: 'Guided Imagery', value: 'guided_imagery' },
+                            { label: 'Cognitive Behavioral Techniques', value: 'cbt' },
+                            { label: 'Emotion Regulation Skills', value: 'emotion_regulation' },
+                            { label: 'Other', value: 'other' }
+                          ]" type="checkbox" />
+                          <q-input v-if="feedbackForm.therapeutic_techniques.includes('other')"
+                            v-model="feedbackForm.other_technique" label="Other Technique" />
+
+                          <!-- Overall Assessment of Patient’s Mental State -->
+                          <h3 class="text-lg font-semibold mb-3">8. Overall Assessment of Patient’s Mental State</h3>
+                          <q-option-group v-model="feedbackForm.mental_state" :options="[
+                            { label: 'Improved', value: 'improved' },
+                            { label: 'Stable', value: 'stable' },
+                            { label: 'Deteriorated', value: 'deteriorated' }
+                          ]" type="radio" />
+
+                          <!-- Recommendations for Future Sessions -->
+                          <h3 class="text-lg font-semibold mb-3">9. Recommendations for Future Sessions</h3>
+                          <q-input v-model="feedbackForm.recommendations" type="textarea" rows="3" />
+
+                          <!-- Additional Notes or Observations -->
+                          <h3 class="text-lg font-semibold mb-3">10. Additional Notes or Observations</h3>
+                          <q-input v-model="feedbackForm.additional_notes" type="textarea" rows="3" />
+
+                          <!-- Therapist Signature -->
+                          <p class="mt-5">Therapist Signature: <q-input v-model="feedbackForm.therapist_signature" />
+                          </p>
+                        </q-card-section>
+
+                        <!-- Form Actions -->
+                        <q-card-actions align="right">
+                          <q-btn label="Cancel" color="grey" @click="closeFeedbackForm" />
+                          <q-btn label="Submit" color="primary" @click="submitFeedbackForm" />
+                        </q-card-actions>
+                      </q-card>
+                    </q-dialog>
+
+
+                  </q-card-section>
+
+                  <q-card-actions align="right">
+                    <q-btn rounded label="Close" @click="closeAppointmentModal" color="grey" class="mb-3"
+                      padding="xs md" />
+                    <q-btn rounded label="Update Status" @click="updateAppointmentStatus" color="positive" class="mb-3"
+                      padding="xs md" />
+                  </q-card-actions>
+                </q-card>
+              </q-dialog>
+            </div>
+            <div v-else>
+              <h3 class="text-lg font-semibold mb-3">Available Appointment Dates</h3>
+              <div v-if="availableDates.length">
+                <ul>
+                  <li v-for="date in availableDates" :key="date.id">
+                    {{ formatDate(date) }} at {{ date.time }}
+                    <q-btn label="Pick Date" @click="requestAppointment(date)" />
+                  </li>
+                </ul>
+              </div>
+              <div v-else>
+                <p>No available dates at the moment.</p>
+              </div>
+            </div>
+
+            <div v-if="isUser">
+              <h2 class="mt-10 text-lg font-semibold mb-3">All Appointments</h2>
+              <ul v-if="appointments.length">
+                <li v-for="appointment in appointments" :key="appointment.id" class="appointment-item">
+                  <!-- Display Time -->
+                  <p><strong>Time:</strong> {{ convertTo12HourFormat(appointment.appointment_time) }}</p>
+
+                  <!-- Toggle Details Button with Arrow -->
+                  <button @click="toggleDetails(appointment.id)" class="details-toggle">
+                    {{ showDetails[appointment.id] ? '▲' : '▼' }} <!-- Arrow for toggle -->
+                    {{ showDetails[appointment.id] ? 'Hide Details' : 'Show Details' }}
+                  </button>
+
+                  <!-- Conditional Details Section -->
+                  <div v-show="showDetails[appointment.id]" class="appointment-details">
+                    <p><strong>Link:</strong>
+                      <a :href="appointment.link" target="_blank" v-if="appointment.link">{{ appointment.link }}</a>
+                      <span v-else>No link available</span>
+                    </p>
+                    <p><strong>Status:</strong> {{ appointment.status }}</p>
+                  </div>
+                </li>
+              </ul>
+              <p v-else>No appointments available.</p>
+              <h1 class="mt-10 text-lg font-semibold mb-3">Select Completed Session</h1>
+
+              <div>
+
+
+                <div v-if="completedSessions.length > 0">
+                  <div class="mb-1">
+                  <label for="therapistSelect">Select Therapist:</label>
+                  <select id="therapistSelect" v-model="selectedTherapistId" @change="onTherapistChange">
+                    <option v-for="therapist in therapists" :key="therapist.id" :value="therapist.id">
+                      {{ therapist.name }}
+                    </option>
+                  </select>
+                  </div>
+                  <br />
+                  <label for="completedSession">Select Date:</label>
+                  <select v-model="selectedSessionId" @change="fetchSessionReportAndMentalState">
+                    <option v-for="session in completedSessions" :key="session.id" :value="session.id">
+                      {{ session.appointment_date }} - {{ session.appointment_time }}
+                    </option>
+                  </select>
+                </div>
+                <div v-else>
+                  <p>No completed sessions available.</p>
+                </div>
+
+                <div v-if="sessionReport">
+                  <h2 class="mt-10 text-lg font-semibold mb-3">Session Report</h2>
+                  <p><strong>Duration:</strong> {{ sessionReport.duration }} minutes</p>
+                  <p><strong>Activity Type:</strong> {{ sessionReport.activity_type }}</p>
+                  <p><strong>Engagement Level:</strong> {{ sessionReport.engagement_level }}</p>
+                  <p><strong>Observed Emotions:</strong> {{ sessionReport.observed_emotions?.join(', ') || 'No emotions recorded' }}</p>
+                  <!-- Additional fields as necessary -->
+                </div>
+
+                <h2 class="mt-10 text-lg font-semibold mb-3">Mental State Distribution</h2>
+                <ApexCharts type="pie" :options="chartOptions1" :series="chartSeries" />
+
+              </div>
+            </div>
+
           </q-card-section>
         </q-card>
       </div>
@@ -455,11 +478,48 @@ import { Link, usePage, router } from "@inertiajs/vue3";
 import moment from 'moment';
 import ApexCharts from 'vue3-apexcharts';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import { date } from 'quasar';
+import { defineProps } from 'vue';
+const therapists = ref([]);
+const selectedTherapistId = ref(null);
+const emit = defineEmits(['therapist-selected']);
+const fetchTherapists = async () => {
+  try {
+    const response = await axios.get('/users2'); // Adjust the API endpoint as necessary
+    therapists.value = response.data;
+  } catch (error) {
+    console.error('Error fetching therapists:', error);
+  }
+};
+const onTherapistChange = () => {
+  emit('therapist-selected', selectedTherapistId.value);
+};
 const CLIENT_ID_KEY = 'selectedClientId';
 const appointmentLink = ref(''); // Link for the appointment
-
+const completedSessions = ref([]);
+const selectedSessionId = ref(null);
+const mentalStateCounts = ref({ improved: 0, stable: 0, deteriorated: 0 });
+const chartOptions1 = {
+  chart: {
+    type: 'pie',
+    height: '350'
+  },
+  labels: ['Improved', 'Stable', 'Deteriorated'], // Ensure labels match counts
+  responsive: [{
+    breakpoint: 480,
+    options: {
+      chart: {
+        width: 200
+      },
+      legend: {
+        position: 'bottom'
+      }
+    }
+  }]
+};
+const chartSeries = ref([0, 0, 0]);
 const appointments = ref([]);
-
+const showFeedbackForm = ref(false);
 const availableDates = ref([]);
 const availableDatesForClient = ref([]);
 const newAvailableDate = ref('');
@@ -489,34 +549,25 @@ const feedbackForm = ref({
   additional_notes: '',
   therapist_signature: ''
 });
-
-
-
-
 const closeFeedbackForm = () => {
   showFeedbackForm.value = false;
 };
-
 const submitFeedbackForm = async () => {
   // Debugging: Log the selected appointment and feedback form data before proceeding
   console.log('Selected Appointment:', selectedAppointment.value);
   console.log('Feedback Form Data before submission:', feedbackForm.value);
-
   // Check if appointment ID and feedbackForm data are valid
   if (!selectedAppointment.value || !selectedAppointment.value.id) {
     toast.error('No appointment selected or appointment ID is missing.');
     return;
   }
-
   // Ensure observedEmotions is an array in case it's undefined
   const formData = {
     ...feedbackForm.value,
     observedEmotions: feedbackForm.value.observedEmotions || [],  // Default to empty array if undefined
   };
-
   // Debugging: Log the final payload data being sent to the API
   console.log('Final Payload for API Submission:', formData);
-
   try {
     const response = await axios.post(
       `/appointments/${selectedAppointment.value.id}/session-report`,
@@ -525,22 +576,19 @@ const submitFeedbackForm = async () => {
         headers: { 'Content-Type': 'application/json' }
       }
     );
-
     // Debugging: Log the response from the API if successful
     console.log('API Response:', response.data);
-    
+
     toast.success('Feedback form submitted successfully!');
     closeFeedbackForm();
   } catch (error) {
     // Debugging: Log error details if the API call fails
     console.error('Error submitting feedback form:', error);
-
     if (error.response) {
       console.error('Error Response Data:', error.response.data);
       console.error('Error Response Status:', error.response.status);
       console.error('Error Response Headers:', error.response.headers);
     }
-
     toast.error('Failed to submit feedback form.');
   }
 };
@@ -583,6 +631,17 @@ const updateAppointmentStatus = async () => {
 
     // Update appointment status and link
     await axios.put(`/appointments/${selectedAppointment.value.id}`, payload);
+
+    // If the status is "completed" and there's a session report, trigger the session report creation
+    if (selectedStatus.value === 'completed' && sessionReport.value.duration) {
+      await axios.post(`/appointments/${selectedAppointment.value.id}/session-report`, {
+        duration: sessionReport.value.duration,
+        activity_type: sessionReport.value.activity_type,
+        other_activity: sessionReport.value.other_activity,
+        engagement_level: sessionReport.value.engagement_level,
+      });
+      toast.success('Session report submitted successfully.');
+    }
 
     toast.success('Appointment status updated successfully.');
     closeAppointmentModal();
@@ -641,7 +700,7 @@ const fetchAvailableDates = async () => {
     console.log('Response data:', response.data); // Add logging to see what you get
     availableDates.value = response.data.availableDates.map(date => ({
       ...date,
-      time: convertTo12HourFormat(date.time),
+      time: date.time,
     })) || [];
   } catch (error) {
     console.error('Error fetching available dates:', error.response);
@@ -732,6 +791,7 @@ const requestAppointment = async (date) => {
     });
     toast.success('Appointment booked successfully!');
     fetchAvailableDatesForClient();
+    fetchAppointments();
   } catch (error) {
     toast.error('Failed to book appointment.');
   }
@@ -759,8 +819,8 @@ const openModal = (assessment = null) => {
   showAssessmentModal.value = true;
 };
 const toggleDetails = (id) => {
-      showDetails.value[id] = !showDetails.value[id];
-    };
+  showDetails.value[id] = !showDetails.value[id];
+};
 // Close the modal
 const closeModal = () => {
   showAssessmentModal.value = false;
@@ -937,7 +997,21 @@ const fetchTherapySessionData = async (userId = null) => {
     toast.error('Failed to fetch therapy session data.');
   }
 };
+async function fetchMentalStateCounts() {
+  try {
+    const response = await axios.get(`/mental-state-counts/${selectedSessionId.value}/${authUser.value.id}`);
+    const data = response.data.mentalStateCounts;
 
+    // Update mentalStateCounts based on the API response
+    mentalStateCounts.value = [
+      data.improved || 0,
+      data.stable || 0,
+      data.deteriorated || 0,
+    ];
+  } catch (error) {
+    console.error('Error fetching mental state counts:', error);
+  }
+}
 
 // Fetch moods from the backend
 const fetchMoods = async () => {
@@ -969,6 +1043,8 @@ const fetchMoods = async () => {
     loading.value = false;
   }
 };
+
+console.log('Chart Series Data:', chartSeries.value);
 watch(clientId, async (newValue) => {
   if (newValue) {
     localStorage.setItem(CLIENT_ID_KEY, newValue); // Save to localStorage
@@ -976,7 +1052,13 @@ watch(clientId, async (newValue) => {
     await fetchAssessmentComment();
   }
 });
-
+watch(mentalStateCounts, (newCounts) => {
+  chartSeries.value[0].data = [
+    newCounts.improved || 0,
+    newCounts.stable || 0,
+    newCounts.deteriorated || 0
+  ];
+});
 watch(userMoods, () => {
   updateMoodSummaries();
 });
@@ -1205,20 +1287,63 @@ const fetchUserList = async () => {
 // Update session progress for the selected user (therapist only)
 
 const formatDate = (dateObj) => {
-  // Extract date parts from dateObj.date (YYYY-MM-DD format)
+  // const [year, month, day] = dateObj.date.split('-').map(part => parseInt(part, 10));
+  // console.log(`Extracted Date Parts - Year: ${year}, Month: ${month}, Day: ${day}`);
+
+  // const timeString = dateObj.time ? dateObj.time : '00:00:00';
+  // console.log(`Raw Time String: ${timeString}`); 
+
+  // const dateString = `${month}/${day}/${year}`; 
+  // return `${dateString}, ${timeString}`; 
+  if (!dateObj || !dateObj.date) return 'Invalid date';
+
   const [year, month, day] = dateObj.date.split('-').map(part => parseInt(part, 10));
-  console.log(`Extracted Date Parts - Year: ${year}, Month: ${month}, Day: ${day}`);
-
-  // Extract time string from dateObj.time (HH:mm:ss format)
-  const timeString = dateObj.time ? dateObj.time : '00:00:00';
-  console.log(`Raw Time String: ${timeString}`); // Log the raw time string
-
-  // Create a formatted date string
-  const dateString = `${month}/${day}/${year}`; // Format as MM/DD/YYYY
-
-  // Simply return the combined date and time without conversion
-  return `${dateString}, ${timeString}`; // Return MM/DD/YYYY, HH:mm:ss
+  const dateString = `${month}/${day}/${year}`;
+  return dateString; // Only return the formatted date
 };
+async function fetchSessionReportAndMentalState() {
+  if (!selectedSessionId.value) return;
+
+  try {
+    // Fetch session report
+    const sessionReportResponse = await axios.get(`/session-report/${selectedSessionId.value}`);
+    console.log('Session Report Response:', sessionReportResponse.data); // Log response
+
+    // Fetch mental state counts
+    const mentalStateCountsResponse = await axios.get(`/mental-state-counts/${selectedTherapistId.value}/${authUser.value.id}`);
+    console.log('Mental State Counts Response:', mentalStateCountsResponse.data); // Log response
+
+    // Check if the session report response is valid
+    if (sessionReportResponse.data.sessionReport) {
+      sessionReport.value = sessionReportResponse.data.sessionReport;
+    } else {
+      sessionReport.value = null; // Handle no report case
+    }
+
+    // Update mental state counts and chart series
+    if (mentalStateCountsResponse.data && mentalStateCountsResponse.data.mentalStateCounts) {
+      const counts = mentalStateCountsResponse.data.mentalStateCounts;
+
+      // Update chart series directly for pie chart
+      chartSeries.value = [
+        counts.improved || 0,
+        counts.stable || 0,
+        counts.deteriorated || 0,
+      ]; // Set chart data directly as an array of numbers
+    } else {
+      chartSeries.value = [0, 0, 0]; // Reset chart data for pie chart
+    }
+
+    // Log chart data to see what is being passed
+    console.log('Updated Chart Series:', chartSeries.value);
+
+  } catch (error) {
+    console.error('Error fetching session report or mental state counts:', error);
+    sessionReport.value = null; // Reset on error
+    mentalStateCounts.value = { improved: 0, stable: 0, deteriorated: 0 }; // Default mental state counts
+    chartSeries.value[0].data = [0, 0, 0]; // Reset chart values
+  }
+}
 
 onMounted(async () => {
   try {
@@ -1232,6 +1357,7 @@ onMounted(async () => {
       await fetchAssessmentComment();
       await fetchTherapySessionData(clientId.value || authUser.value.id); // Ensure the session data is also fetched
 
+
     } else {
       // Fetch therapy session data for the current logged-in user
 
@@ -1244,6 +1370,9 @@ onMounted(async () => {
       await fetchTherapySessionData(clientId.value || authUser.value.id); // Ensure the session data is also fetched
       await fetchPendingAppointments();
     }
+    fetchTherapists();
+    const response = await axios.get(`/completed-sessions/${authUser.value.id}`);
+    completedSessions.value = response.data.appointments;
     fetchAvailableDates();
     fetchAvailableDatesForClient();
 
@@ -1650,15 +1779,94 @@ input[type="number"]:focus {
   pointer-events: none;
   transform: translateY(-50%);
 }
+
 .selectable-appointment {
   cursor: pointer;
   padding: 10px;
-  border-radius: 5px;
+  border-radius: 10px;
   transition: background-color 0.3s;
+  border: 1px solid black;
 }
 
 .selectable-appointment:hover {
-  background-color: #f1f5f9; /* Light gray to indicate hover */
+  background-color: #f1f5f9;
+  /* Light gray to indicate hover */
 }
 
+.appointments-list {
+  padding: 1rem;
+  background-color: #f9f9f9;
+  /* Light background for the list */
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.appointment-item {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background-color: #ffffff;
+  /* White background for individual appointments */
+  border: 1px solid #e0e0e0;
+  /* Light border */
+  border-radius: 0.5rem;
+  transition: background-color 0.3s;
+  /* Smooth background transition */
+}
+
+.appointment-item:hover {
+  background-color: #f1f1f1;
+  /* Darker background on hover */
+}
+
+.details-toggle {
+  background: none;
+  /* Remove default button background */
+  border: none;
+  /* Remove border */
+  color: #007bff;
+  /* Blue color for the link */
+  cursor: pointer;
+  /* Pointer cursor */
+  font-size: 1rem;
+  /* Font size */
+  padding: 0;
+  /* Remove padding */
+  text-align: left;
+  /* Align text to the left */
+}
+
+.details-toggle:hover {
+  text-decoration: underline;
+  /* Underline on hover */
+}
+
+.appointment-details {
+  margin-top: 0.5rem;
+  /* Spacing above details */
+  padding: 0.5rem;
+  background-color: #f8f8f8;
+  /* Light background for details */
+  border-radius: 0.25rem;
+  /* Slightly rounded corners */
+}
+
+.feedback-form-card {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.form-title {
+  font-size: 1.5em;
+  font-weight: bold;
+  margin-bottom: 1em;
+}
+
+.border-bottom {
+  border-bottom: 2px solid black;
+  /* Change color and thickness as needed */
+  padding-bottom: 0.5rem;
+  /* Add some space below the text */
+  margin-bottom: 1rem;
+  /* Space between the header and following content */
+}
 </style>

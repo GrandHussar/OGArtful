@@ -2,11 +2,11 @@
 // app/Http/Controllers/SessionReportController.php
 
 namespace App\Http\Controllers;
-
+use Illuminate\Support\Facades\Log;
 use App\Models\Appointment;
 use App\Models\SessionReport;
 use Illuminate\Http\Request;
-
+use Inertia\Inertia;
 class SessionReportController extends Controller
 {
     public function store(Request $request, $appointmentId)
@@ -58,24 +58,20 @@ class SessionReportController extends Controller
             ->where('user_id', $patientId)
             ->with('sessionReport')
             ->get();
-
         // Filter only appointments that have session reports
         $sessionReports = $appointments->pluck('sessionReport')->filter();
-
         // Initialize counters for each mental state
         $mentalStateCounts = [
             'improved' => 0,
             'stable' => 0,
             'deteriorated' => 0
         ];
-
         // Count each mental state
         foreach ($sessionReports as $report) {
             if ($report && isset($mentalStateCounts[$report->mental_state])) {
                 $mentalStateCounts[$report->mental_state]++;
             }
         }
-
         // Return the data as a JSON response for testing
         return response()->json([
             'patientId' => $patientId,
@@ -84,4 +80,52 @@ class SessionReportController extends Controller
             'mentalStateCounts' => $mentalStateCounts
         ], 200);
     }
+    public function getCompletedSessions($patientId)
+{
+    $appointments = Appointment::where('user_id', $patientId)
+        ->where('status', 'completed') // Fetch only completed appointments
+        ->with('sessionReport')
+        ->get();
+
+    return response()->json(['appointments' => $appointments]);
+}
+public function getSessionReport($sessionId)
+{
+    $sessionReport = SessionReport::where('appointment_id', $sessionId)->first();
+
+    if (!$sessionReport) {
+        return response()->json(['message' => 'Session report not found'], 404);
+    }
+
+    return response()->json(['sessionReport' => $sessionReport]);
+}
+public function getMentalStateCounts($therapistId, $patientId)
+{
+    // Fetch all sessions associated with both the therapist and the patient
+    $appointments = Appointment::where('therapist_id', $therapistId)
+        ->where('user_id', $patientId)
+        ->with('sessionReport')
+        ->get();
+
+    // Filter only appointments that have session reports
+    $sessionReports = $appointments->pluck('sessionReport')->filter();
+
+    // Initialize counters for each mental state
+    $mentalStateCounts = [
+        'improved' => 0,
+        'stable' => 0,
+        'deteriorated' => 0
+    ];
+
+    // Count each mental state
+    foreach ($sessionReports as $report) {
+        if ($report && isset($mentalStateCounts[$report->mental_state])) {
+            $mentalStateCounts[$report->mental_state]++;
+        }
+    }
+
+    // Return the data as a JSON response
+    return response()->json(['mentalStateCounts' => $mentalStateCounts], 200);
+}
+
 }

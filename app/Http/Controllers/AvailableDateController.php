@@ -53,9 +53,14 @@ class AvailableDateController extends Controller
         // Convert time from 24-hour to 12-hour format with AM/PM
         $dates->transform(function ($date) {
             try {
-                $date->time = \Carbon\Carbon::createFromFormat('H:i', $date->time)->format('g:i A');
+                $date->time = \Carbon\Carbon::createFromFormat('H:i:s', $date->time)->format('g:i A');
             } catch (\Exception $e) {
-                \Log::error('Error converting time format:', ['time' => $date->time, 'error' => $e->getMessage()]);
+                try {
+                    // Attempt to parse with only hours and minutes if seconds are not expected
+                    $date->time = \Carbon\Carbon::createFromFormat('H:i', $date->time)->format('g:i A');
+                } catch (\Exception $e) {
+                    \Log::error('Error converting time format:', ['time' => $date->time, 'error' => $e->getMessage()]);
+                }
             }
             return $date;
         });

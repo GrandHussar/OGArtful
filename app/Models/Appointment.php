@@ -8,15 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Appointment extends Model
 {
     use HasFactory;
-
-    protected $fillable = [
-        'user_id',
-        'therapist_id',
-        'appointment_date',
-        'appointment_time',
-        'status',
-        'link'
-    ];
+    protected $fillable = ['user_id', 'therapist_id', 'appointment_date', 'available_date_id', 'appointment_time', 'status', 'link'];
 
     public function user()
     {
@@ -32,4 +24,5 @@ class Appointment extends Model
     {
         return $this->hasOne(SessionReport::class);
     }
+
 }
