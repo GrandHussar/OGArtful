@@ -216,5 +216,6 @@ Route::get('/api/site-settings', function () {
 });
 Route::get('/searchBar', [SearchController::class, 'search'])->name('searchBar');
 Route::post('/integrateTherapist', 'MessagesController@integrateTherapist')->name('integrateTherapist');
+Route::get('/therapists/{therapistId}/patients/{patientId}/session-summary', [SessionReportController::class, 'getPatientSessionSummary']);
 
 require __DIR__ . '/auth.php';

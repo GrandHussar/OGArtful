@@ -96,55 +96,158 @@
       </div>
       <q-btn label="Update Link" @click="updateAppointmentLink" color="primary" class="mt-2" />
 
-      <!-- Status Selection -->
       <div class="status-selection mt-4">
-        <label>Status:</label>
-        <select v-model="selectedStatus" @change="handleStatusChange" class="w-full p-2 mt-2 border border-gray-300 rounded-lg">
-          <option value="" disabled>Select Status</option>
-          <option value="completed">Complete</option>
-          <option value="cancelled">Canceled</option>
-        </select>
-      </div>
+      <label>Status:</label>
+      <select v-model="selectedStatus" @change="handleStatusChange" class="w-full p-2 mt-2 border border-gray-300 rounded-lg">
+        <option value="" disabled>Select Status</option>
+        <option value="completed">Complete</option>
+        <option value="cancelled">Canceled</option>
+      </select>
+    </div>
 
-      <!-- Conditionally Display Session Report Fields When Status is "completed" -->
-      <div v-if="selectedStatus === 'completed'" class="session-report mt-4">
-        <h4>Session Report</h4>
+    <!-- Conditionally Show Button for Feedback Form When Status is "completed" -->
+    <q-btn v-if="selectedStatus === 'completed'" label="Open Feedback Form" color="primary" @click="showFeedbackForm = true" />
 
-        <!-- Duration Field -->
-        <q-input v-model="sessionReport.duration" label="Duration of Session" type="number" />
+    <!-- Pop-Out Feedback Form Dialog -->
+  <!-- Feedback Form Modal -->
+  <q-dialog v-model="showFeedbackForm" persistent>
+    <q-card class="feedback-form-card">
+      <q-card-section>
+        <h2 class="form-title">Art Therapist Feedback Form: Digital Art Therapy Session</h2>
 
-        <!-- Digital Activity Type Radio Buttons -->
-        <div class="activity-type mt-3">
-          <label>Type of Digital Activity Used:</label>
-          <q-option-group
-            v-model="sessionReport.activity_type"
-            :options="[ 
-              { label: 'Drawing', value: 'drawing' },
-              { label: 'Painting', value: 'painting' },
-              { label: 'Animation', value: 'animation' },
-              { label: 'Collage', value: 'collage' },
-              { label: 'Others', value: 'others' }
-            ]"
-            type="radio"
-          />
-          <q-input v-if="sessionReport.activity_type === 'others'" v-model="sessionReport.other_activity" label="Specify Other Activity" />
-        </div>
+        <!-- Therapist and Patient Information -->
+        <p>Therapist Name: <q-input v-model="feedbackForm.therapist_name" /></p>
+        <p>Patient Name: <q-input v-model="feedbackForm.patient_name" /></p>
+        <p>Date of Session: <q-input v-model="feedbackForm.session_date" type="date" /></p>
 
-        <!-- Engagement Level Selection -->
-        <div class="engagement-level mt-3">
-          <label>Patient Engagement Level:</label>
-          <q-option-group
-            v-model="sessionReport.engagement_level"
-            :options="[ 
-              { label: 'Not Engaged', value: 'not engaged' },
-              { label: 'Somewhat Engaged', value: 'somewhat engaged' },
-              { label: 'Moderately Engaged', value: 'moderately engaged' },
-              { label: 'Highly Engaged', value: 'highly engaged' }
-            ]"
-            type="radio"
-          />
-        </div>
-      </div>
+        <!-- Session Overview -->
+        <h3>1. Session Overview</h3>
+        <q-input v-model="feedbackForm.duration" label="Duration of Session (minutes)" type="number" />
+        <q-option-group
+          v-model="feedbackForm.activity_type"
+          :options="[
+            { label: 'Drawing', value: 'drawing' },
+            { label: 'Mindful Coloring', value: 'painting' },
+            { label: 'Collage', value: 'collage' },
+            { label: 'Animation', value: 'animation' },
+            { label: 'Other', value: 'other' }
+          ]"
+          type="radio"
+        />
+
+        <!-- Patient’s Engagement Level -->
+        <h3>2. Patient’s Engagement Level</h3>
+        <q-option-group
+          v-model="feedbackForm.engagement_level"
+          :options="[
+            { label: 'Highly Engaged', value: 'highly engaged' },
+            { label: 'Moderately Engaged', value: 'moderately engaged' },
+            { label: 'Somewhat Engaged', value: 'somewhat engaged' },
+            { label: 'Not Engaged', value: 'not engaged' }
+          ]"
+          type="radio"
+        />
+
+        <!-- Observed Emotions During the Session -->
+        <h3>3. Observed Emotions During the Session</h3>
+        <q-option-group
+          v-model="feedbackForm.observed_emotions"
+          :options="[
+            { label: 'Joy', value: 'joy' },
+            { label: 'Sadness', value: 'sadness' },
+            { label: 'Frustration', value: 'frustration' },
+            { label: 'Anxiety', value: 'anxiety' },
+            { label: 'Calmness', value: 'calmness' },
+            { label: 'Anger', value: 'anger' }
+          ]"
+          type="checkbox"
+        />
+        <q-input v-if="feedbackForm.observed_emotions.includes('other')" v-model="feedbackForm.other_emotion" label="Other Emotion" />
+
+        <!-- Patient’s Artistic Expression -->
+        <h3>4. Patient’s Artistic Expression</h3>
+        <q-option-group
+          v-model="feedbackForm.artistic_quality"
+          :options="[
+            { label: 'Excellent', value: 'excellent' },
+            { label: 'Good', value: 'good' },
+            { label: 'Fair', value: 'fair' },
+            { label: 'Poor', value: 'poor' }
+          ]"
+          type="radio"
+        />
+        <h3>5. Patient’s Artistic Theme</h3>
+        <q-option-group
+          v-model="feedbackForm.artwork_theme"
+          :options="[
+            { label: 'Positive', value: 'positive' },
+            { label: 'Negative', value: 'negative' },
+            { label: 'Neutral', value: 'neutral' },
+            { label: 'Other', value: 'other' }
+          ]"
+          type="radio"
+        />
+        <q-input v-if="feedbackForm.artwork_theme === 'other'" v-model="feedbackForm.other_theme" label="Other Theme" />
+
+        <!-- Insights Gained from the Session -->
+        <h3>6. Insights Gained from the Session</h3>
+        <q-option-group
+          v-model="feedbackForm.shared_significant_thoughts"
+          :options="[
+            { label: 'Yes', value: true },
+            { label: 'No', value: false }
+          ]"
+          type="radio"
+        />
+        <q-input v-if="feedbackForm.shared_significant_thoughts" v-model="feedbackForm.thoughts_detail" label="If yes, please elaborate" />
+
+        <!-- Therapeutic Techniques Used -->
+        <h3>7. Therapeutic Techniques Used</h3>
+        <q-option-group
+          v-model="feedbackForm.therapeutic_techniques"
+          :options="[
+            { label: 'Guided Imagery', value: 'guided_imagery' },
+            { label: 'Cognitive Behavioral Techniques', value: 'cbt' },
+            { label: 'Emotion Regulation Skills', value: 'emotion_regulation' },
+            { label: 'Other', value: 'other' }
+          ]"
+          type="checkbox"
+        />
+        <q-input v-if="feedbackForm.therapeutic_techniques.includes('other')" v-model="feedbackForm.other_technique" label="Other Technique" />
+
+        <!-- Overall Assessment of Patient’s Mental State -->
+        <h3>8. Overall Assessment of Patient’s Mental State</h3>
+        <q-option-group
+          v-model="feedbackForm.mental_state"
+          :options="[
+            { label: 'Improved', value: 'improved' },
+            { label: 'Stable', value: 'stable' },
+            { label: 'Deteriorated', value: 'deteriorated' }
+          ]"
+          type="radio"
+        />
+
+        <!-- Recommendations for Future Sessions -->
+        <h3>9. Recommendations for Future Sessions</h3>
+        <q-input v-model="feedbackForm.recommendations" type="textarea" rows="3" />
+
+        <!-- Additional Notes or Observations -->
+        <h3>10. Additional Notes or Observations</h3>
+        <q-input v-model="feedbackForm.additional_notes" type="textarea" rows="3" />
+
+        <!-- Therapist Signature -->
+        <p>Therapist Signature: <q-input v-model="feedbackForm.therapist_signature" /></p>
+      </q-card-section>
+
+      <!-- Form Actions -->
+      <q-card-actions align="right">
+        <q-btn label="Cancel" color="grey" @click="closeFeedbackForm" />
+        <q-btn label="Submit" color="primary" @click="submitFeedbackForm" />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+
+
     </q-card-section>
 
     <q-card-actions align="right">
@@ -364,7 +467,84 @@ const newAvailableTime = ref('');
 const selectedDateId = ref(null);
 const showAppointmentModal = ref(false);
 const selectedAppointment = ref(null);
+const showFeedbackForm = ref(false);
 const selectedStatus = ref('');
+const feedbackForm = ref({
+  therapist_name: '',
+  patient_name: '',
+  session_date: '',
+  duration: null,
+  activity_type: '', // Valid options: 'drawing', 'painting', 'animation', 'collage', 'other'
+  other_activity: '',
+  engagement_level: '', // Valid options: 'not engaged', 'somewhat engaged', 'moderately engaged', 'highly engaged'
+  observed_emotions: [],
+  artistic_quality: '', // Valid options: 'excellent', 'good', 'fair', 'poor'
+  artwork_theme: '', // Valid options: 'positive', 'negative', 'neutral', 'other'
+  other_theme: '',
+  shared_significant_thoughts: false, // Set as boolean
+  thoughts_detail: '',
+  therapeutic_techniques: [], // Stored as JSON array
+  mental_state: '', // Valid options: 'improved', 'stable', 'deteriorated'
+  recommendations: '',
+  additional_notes: '',
+  therapist_signature: ''
+});
+
+
+
+
+const closeFeedbackForm = () => {
+  showFeedbackForm.value = false;
+};
+
+const submitFeedbackForm = async () => {
+  // Debugging: Log the selected appointment and feedback form data before proceeding
+  console.log('Selected Appointment:', selectedAppointment.value);
+  console.log('Feedback Form Data before submission:', feedbackForm.value);
+
+  // Check if appointment ID and feedbackForm data are valid
+  if (!selectedAppointment.value || !selectedAppointment.value.id) {
+    toast.error('No appointment selected or appointment ID is missing.');
+    return;
+  }
+
+  // Ensure observedEmotions is an array in case it's undefined
+  const formData = {
+    ...feedbackForm.value,
+    observedEmotions: feedbackForm.value.observedEmotions || [],  // Default to empty array if undefined
+  };
+
+  // Debugging: Log the final payload data being sent to the API
+  console.log('Final Payload for API Submission:', formData);
+
+  try {
+    const response = await axios.post(
+      `/appointments/${selectedAppointment.value.id}/session-report`,
+      formData,
+      {
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+
+    // Debugging: Log the response from the API if successful
+    console.log('API Response:', response.data);
+    
+    toast.success('Feedback form submitted successfully!');
+    closeFeedbackForm();
+  } catch (error) {
+    // Debugging: Log error details if the API call fails
+    console.error('Error submitting feedback form:', error);
+
+    if (error.response) {
+      console.error('Error Response Data:', error.response.data);
+      console.error('Error Response Status:', error.response.status);
+      console.error('Error Response Headers:', error.response.headers);
+    }
+
+    toast.error('Failed to submit feedback form.');
+  }
+};
+
 const openAppointmentModal = (appointment) => {
   selectedAppointment.value = appointment;
   showAppointmentModal.value = true;
@@ -383,14 +563,9 @@ const fetchPendingAppointments = async () => {
 };
 
 const handleStatusChange = () => {
-  if (selectedStatus.value === 'completed') {
-    // Reset session report fields if status is set to completed
-    sessionReport.value = {
-      duration: null,
-      activity_type: '',
-      other_activity: '',
-      engagement_level: ''
-    };
+  if (selectedStatus.value !== 'completed') {
+    // Hide the feedback form button if the status is not "completed"
+    showFeedbackForm.value = false;
   }
 };
 
@@ -408,17 +583,6 @@ const updateAppointmentStatus = async () => {
 
     // Update appointment status and link
     await axios.put(`/appointments/${selectedAppointment.value.id}`, payload);
-    
-    // If the status is "completed" and there's a session report, trigger the session report creation
-    if (selectedStatus.value === 'completed' && sessionReport.value.duration) {
-      await axios.post(`/appointments/${selectedAppointment.value.id}/session-report`, {
-        duration: sessionReport.value.duration,
-        activity_type: sessionReport.value.activity_type,
-        other_activity: sessionReport.value.other_activity,
-        engagement_level: sessionReport.value.engagement_level,
-      });
-      toast.success('Session report submitted successfully.');
-    }
 
     toast.success('Appointment status updated successfully.');
     closeAppointmentModal();
@@ -607,13 +771,6 @@ const closeModal = () => {
 const roles = auth.user?.roles.map((role) => role.name) || [];
 
 console.log("role of user:", roles[0]);
-const sessionReport = ref({
-  duration: null,
-  activity_type: '',
-  other_activity: '',
-  engagement_level: ''
-});
-
 
 
 // Reactive references
@@ -1114,6 +1271,15 @@ console.log('Monthly Mood Summary:', monthlyMoodSummary.value);
   border-radius: 10px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   background-color: #ffffff;
+}
+.feedback-form-card {
+  max-width: 600px;
+  margin: 0 auto;
+}
+.form-title {
+  font-size: 1.5em;
+  font-weight: bold;
+  margin-bottom: 1em;
 }
 
 .update-session-card {
