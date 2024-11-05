@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('therapist_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('available_date_id')->constrained('available_dates')->onDelete('cascade');
             $table->date('appointment_date');
             $table->time('appointment_time');
             $table->timestamps();

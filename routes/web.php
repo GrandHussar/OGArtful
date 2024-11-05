@@ -216,5 +216,10 @@ Route::get('/api/site-settings', function () {
 });
 Route::get('/searchBar', [SearchController::class, 'search'])->name('searchBar');
 Route::post('/integrateTherapist', 'MessagesController@integrateTherapist')->name('integrateTherapist');
-
+Route::get('/completed-sessions/{patientId}', [SessionReportController::class, 'getCompletedSessions'])
+    ->name('sessions.completed');
+    Route::get('/session-report/{sessionId}', [SessionReportController::class, 'getSessionReport'])
+    ->name('session.report');
+    Route::get('/mental-state-counts/{appointmentId}/{userId}', [SessionReportController::class, 'getMentalStateCounts']);
+    Route::get('/therapists/{therapistId}/patients/{patientId}/session-summary', [SessionReportController::class, 'getPatientSessionSummary']);
 require __DIR__ . '/auth.php';

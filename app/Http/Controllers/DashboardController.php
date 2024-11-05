@@ -170,7 +170,7 @@ class DashboardController extends Controller
      {
          // Fetch users with the "user" role only (exclude admin and therapist)
          $users = User::whereHas('roles', function ($query) {
-             $query->where('name', 'user');
+             $query->where('name', 'therapist');
          })->select('id', 'name')->get();
      
          return response()->json($users);

@@ -11,42 +11,48 @@ use Illuminate\Support\Facades\Auth;
 class AppointmentController extends Controller
 {
     public function store(Request $request)
-    {
-        $request->validate([
-            'appointment_date' => 'required|date',
-            'appointment_time' => 'required',
-            'therapist_id' => 'required|exists:users,id',
-            'link' => 'nullable|url', // Validate the link if provided
-        ]);
+{
+    $request->validate([
+        'appointment_date' => 'required|date',
+        'appointment_time' => 'required',
+        'therapist_id' => 'required|exists:users,id',
+        'link' => 'nullable|url', // Validate the link if provided
+    ]);
 
-        // Convert appointment_time to 24-hour format
-        $formattedTime = Carbon::createFromFormat('g:i A', $request->appointment_time)->format('H:i:s');
+    // Convert appointment_time to 24-hour format
+    $formattedTime = Carbon::createFromFormat('g:i A', $request->appointment_time)->format('H:i:s');
 
-        // Check if the appointment date and therapist's availability is not booked
-        $availableDate = AvailableDate::where('therapist_id', $request->therapist_id)
-            ->where('date', $request->appointment_date)
-            ->where('is_booked', false)
-            ->first();
+    // Check if the appointment date and therapist's availability is not booked
+    $availableDate = AvailableDate::where('therapist_id', $request->therapist_id)
+        ->where('date', $request->appointment_date)
+        ->where('is_booked', false)
+        ->first();
 
-        if (!$availableDate) {
-            return response()->json(['error' => 'This appointment date is not available.'], 400);
-        }
-
-        // Create the appointment
-        $appointment = Appointment::create([
-            'user_id' => Auth::id(),
-            'therapist_id' => $request->therapist_id,
-            'appointment_date' => $request->appointment_date,
-            'appointment_time' => $formattedTime,
-            'status' => 'pending',
-            'link' => $request->link, // Include the link if provided
-        ]);
-
-        // Mark the date as booked
-        $availableDate->update(['is_booked' => true]);
-
-        return response()->json(['appointment' => $appointment]);
+    if (!$availableDate) {
+        return response()->json(['error' => 'This appointment date is not available.'], 400);
     }
+
+    // Retrieve the available_date_id
+    $availableDateId = $availableDate->id;
+    \Log::info("Available Date ID: {$availableDateId}");
+
+    // Create the appointment with available_date_id
+    $appointment = Appointment::create([
+        'user_id' => Auth::id(),
+        'therapist_id' => $request->therapist_id,
+        'appointment_date' => $request->appointment_date,
+        'available_date_id' => $availableDateId, 
+        'appointment_time' => $formattedTime,
+        'status' => 'pending',
+        'link' => $request->link, // Include the link if provided
+    ]);
+
+    // Mark the date as booked
+    $availableDate->update(['is_booked' => true]);
+
+    return response()->json(['appointment' => $appointment]);
+}
+
 
     public function updateStatus(Request $request, $id)
     {
