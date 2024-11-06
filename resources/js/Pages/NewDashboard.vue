@@ -657,6 +657,8 @@ const sessionReport = ref({
     recommendations: '',
     additional_notes: ''
 });
+
+
 const openAppointmentModal = (appointment) => {
   selectedAppointment.value = appointment;
   showAppointmentModal.value = true;
@@ -1365,6 +1367,7 @@ const formatDate = (dateObj) => {
   const dateString = `${month}/${day}/${year}`;
   return dateString; // Only return the formatted date
 };
+
 async function fetchSessionReportAndMentalStateTherapist(appointmentId, userId) {
   if (!appointmentId) return;
 
@@ -1425,7 +1428,7 @@ async function fetchSessionReportAndMentalState() {
     console.log('Session Report Response:', sessionReportResponse.data); // Log response
 
     // Fetch mental state counts
-    const mentalStateCountsResponse = await axios.get(`/mental-state-counts/${selectedTherapistId.value}/${user.id}`);
+    const mentalStateCountsResponse = await axios.get(`/mental-state-counts/${selectedTherapistId.value}/${authUser.id}`);
     console.log('Mental State Counts Response:', mentalStateCountsResponse.data); // Log response
 
     // Check if the session report response is valid
