@@ -464,7 +464,15 @@
                   <p><strong>Artwork Theme:</strong> {{ sessionReport.artwork_theme }}</p>
                   <p><strong>Other Theme:</strong> {{ sessionReport.other_theme }}</p>
                   <p><strong>Shared Significant Thoughts:</strong> {{ sessionReport.shared_significant_thoughts }}</p>
-                  <p><strong>Therapeutic Techniques:</strong> {{ sessionReport.therapeutic_techniques }}</p>
+                  <p>
+  <strong>Therapeutic Techniques:</strong> 
+  {{ 
+    Array.isArray(sessionReport.therapeutic_techniques) 
+      ? sessionReport.therapeutic_techniques.map(technique => technique.replace(/_/g, ' ')).join(', ') 
+      : sessionReport.therapeutic_techniques 
+  }}
+</p>
+          
                   <p><strong>Mental State:</strong> {{ sessionReport.mental_state }}</p>
                   <p><strong>Recommendations:</strong> {{ sessionReport.recommendations }}</p>
                   <p><strong>Additional Notes:</strong> {{ sessionReport.additional_notes }}</p>
@@ -1428,7 +1436,7 @@ async function fetchSessionReportAndMentalState() {
     console.log('Session Report Response:', sessionReportResponse.data); // Log response
 
     // Fetch mental state counts
-    const mentalStateCountsResponse = await axios.get(`/mental-state-counts/${selectedTherapistId.value}/${authUser.id}`);
+    const mentalStateCountsResponse = await axios.get(`/mental-state-counts/${selectedTherapistId.value}/${authUser.value.id}`);
     console.log('Mental State Counts Response:', mentalStateCountsResponse.data); // Log response
 
     // Check if the session report response is valid
