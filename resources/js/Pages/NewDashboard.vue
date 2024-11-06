@@ -221,6 +221,14 @@
                   <p>Appointment with {{ appointment.user.name }} on {{ appointment.appointment_date }} at
                     {{ convertTo12HourFormat(appointment.appointment_time) }}
                   </p>
+                  <div class="flex justify-end">
+                    <q-btn
+                      rounded
+                      color="primary"
+                      label="View Report"
+                      @click.stop="fetchSessionReportAndMentalStateTherapist(appointment.id, appointment.user_id)"
+                    />
+                </div>
                 </li>
               </template>
               <template v-else>
@@ -364,9 +372,9 @@
                         </q-card-section>
 
                         <!-- Form Actions -->
-                        <q-card-actions align="right">
-                          <q-btn label="Cancel" color="grey" @click="closeFeedbackForm" />
-                          <q-btn label="Submit" color="primary" @click="submitFeedbackForm" />
+                        <q-card-actions align="right" class="mb-3">
+                          <q-btn rounded label="Cancel" color="negative" padding="xs md" @click="closeFeedbackForm" />
+                          <q-btn rounded label="Submit" color="positive" padding="xs md"@click="submitFeedbackForm" />
                         </q-card-actions>
                       </q-card>
                     </q-dialog>
@@ -375,9 +383,9 @@
                   </q-card-section>
 
                   <q-card-actions align="right">
-                    <q-btn rounded label="Close" @click="closeAppointmentModal" color="grey" class="mb-3"
+                    <q-btn rounded label="Close" @click="closeAppointmentModal" color="negative" class="mt-3"
                       padding="xs md" />
-                    <q-btn rounded label="Update Status" @click="updateAppointmentStatus" color="positive" class="mb-3"
+                    <q-btn rounded label="Update Status" @click="updateAppointmentStatus" color="positive" class="mt-3"
                       padding="xs md" />
                   </q-card-actions>
                 </q-card>
@@ -425,8 +433,6 @@
               <h1 class="mt-10 text-lg font-semibold mb-3">Select Completed Session</h1>
 
               <div>
-
-
                 <div v-if="completedSessions.length > 0">
                   <div class="mb-1">
                   <label for="therapistSelect">Select Therapist:</label>
@@ -456,6 +462,7 @@
                   <p><strong>Observed Emotions:</strong> {{ Array.isArray(sessionReport.observed_emotions) ? sessionReport.observed_emotions.join(', ') : 'No emotions recorded' }}</p>
                   <p><strong>Artistic Quality:</strong> {{ sessionReport.artistic_quality }}</p>
                   <p><strong>Artwork Theme:</strong> {{ sessionReport.artwork_theme }}</p>
+                  <p><strong>Other Theme:</strong> {{ sessionReport.other_theme }}</p>
                   <p><strong>Shared Significant Thoughts:</strong> {{ sessionReport.shared_significant_thoughts }}</p>
                   <p><strong>Therapeutic Techniques:</strong> {{ sessionReport.therapeutic_techniques }}</p>
                   <p><strong>Mental State:</strong> {{ sessionReport.mental_state }}</p>
@@ -472,6 +479,40 @@
 
           </q-card-section>
         </q-card>
+        <q-dialog v-model="showSessionReport">
+              <q-card class="appointment-modal">
+                <q-card-section>
+                  <div v-if="sessionReport">
+                          <h2 class="text-2xl font-semibold mb-3">Session Report</h2>
+                          <p><strong>Duration:</strong> {{ sessionReport.duration }} minutes</p>
+                          <p><strong>Activity Type:</strong> {{ sessionReport.activity_type }}</p>
+                          <p><strong>Engagement Level:</strong> {{ sessionReport.engagement_level }}</p>
+                          <p><strong>Observed Emotions:</strong> {{ Array.isArray(sessionReport.observed_emotions) ? sessionReport.observed_emotions.join(', ') : 'No emotions recorded' }}</p>
+                          <p><strong>Artistic Quality:</strong> {{ sessionReport.artistic_quality }}</p>
+                          <p><strong>Artwork Theme:</strong> {{ sessionReport.artwork_theme }}</p>
+                          <p><strong>Other Theme:</strong> {{ sessionReport.other_theme || "None" }}</p>
+                          <p><strong>Shared Significant Thoughts:</strong> {{ sessionReport.shared_significant_thoughts }}</p>
+                          <p><strong>Insight Gained:</strong> {{ sessionReport.thoughts_detail }}</p>
+                          <p>
+  <strong>Therapeutic Techniques:</strong> 
+  {{ 
+    Array.isArray(sessionReport.therapeutic_techniques) 
+      ? sessionReport.therapeutic_techniques.map(technique => technique.replace(/_/g, ' ')).join(', ') 
+      : sessionReport.therapeutic_techniques 
+  }}
+</p>
+                          <p><strong>Mental State:</strong> {{ sessionReport.mental_state }}</p>
+                          <p><strong>Recommendations:</strong> {{ sessionReport.recommendations }}</p>
+                          <p><strong>Additional Notes:</strong> {{ sessionReport.additional_notes }}</p>
+                          <!-- Additional fields as necessary -->
+                        </div>
+                        <h2 class="mt-10 text-lg font-semibold mb-3">Mental State Distribution</h2>
+                        <ApexCharts type="pie" :options="chartOptions1" :series="chartSeries" />
+                        <q-btn rounded label="Close" @click="showSessionReport=false" color="negative" class="mt-3"
+                      padding="xs md" />
+              </q-card-section>
+              </q-card>
+        </q-dialog>
       </div>
     </div>
   </AuthenticatedLayout>
@@ -487,6 +528,7 @@ import ApexCharts from 'vue3-apexcharts';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { date } from 'quasar';
 import { defineProps } from 'vue';
+
 const therapists = ref([]);
 const selectedTherapistId = ref(null);
 const emit = defineEmits(['therapist-selected']);
@@ -532,6 +574,7 @@ const newAvailableDate = ref('');
 const newAvailableTime = ref('');
 const selectedDateId = ref(null);
 const showAppointmentModal = ref(false);
+const showSessionReport = ref(false);
 const selectedAppointment = ref(null);
 const showFeedbackForm = ref(false);
 const selectedStatus = ref('');
@@ -1322,6 +1365,57 @@ const formatDate = (dateObj) => {
   const dateString = `${month}/${day}/${year}`;
   return dateString; // Only return the formatted date
 };
+async function fetchSessionReportAndMentalStateTherapist(appointmentId, userId) {
+  if (!appointmentId) return;
+
+  try {
+    // Fetch session report
+    const sessionReportResponse = await axios.get(`/session-report/${appointmentId}`);
+    console.log('Session Report Response:', sessionReportResponse.data); // Log response
+
+    // Fetch mental state counts
+    const mentalStateCountsResponse = await axios.get(`/mental-state-counts/${authUser.value.id}/${userId}`);
+    console.log('Mental State Counts Response:', mentalStateCountsResponse.data); // Log response
+
+    // Check if the session report response is valid
+    if (sessionReportResponse.data && sessionReportResponse.data.sessionReport) {
+      sessionReport.value = sessionReportResponse.data.sessionReport;
+    } else {
+      sessionReport.value = null; // Handle no report case
+    }
+
+    // Update mental state counts and chart series
+    if (mentalStateCountsResponse.data && mentalStateCountsResponse.data.mentalStateCounts) {
+      const counts = mentalStateCountsResponse.data.mentalStateCounts;
+
+      // Update chart series directly for pie chart
+      chartSeries.value = [
+        counts.improved || 0,
+        counts.stable || 0,
+        counts.deteriorated || 0,
+      ]; // Set chart data directly as an array of numbers
+    } else {
+      chartSeries.value = [0, 0, 0]; // Reset chart data for pie chart
+    }
+    showSessionReport.value = true;
+    // Log chart data to see what is being passed
+    console.log('Updated Chart Series:', chartSeries.value);
+
+  } catch (error) {
+    console.error('Error fetching session report or mental state counts:', error);
+
+    // Check if the error response specifically indicates a missing session report
+    if (error.response && error.response.status === 404) {
+      console.error('Therapist must fill up the session report for this appointment.');
+    } else {
+      console.error('An unexpected error occurred.');
+    }
+
+    sessionReport.value = null; // Reset on error
+    mentalStateCounts.value = { improved: 0, stable: 0, deteriorated: 0 }; // Default mental state counts
+    chartSeries.value = [0, 0, 0]; // Reset chart values
+  }
+}
 async function fetchSessionReportAndMentalState() {
   if (!selectedSessionId.value) return;
 
@@ -1331,7 +1425,7 @@ async function fetchSessionReportAndMentalState() {
     console.log('Session Report Response:', sessionReportResponse.data); // Log response
 
     // Fetch mental state counts
-    const mentalStateCountsResponse = await axios.get(`/mental-state-counts/${selectedTherapistId.value}/${authUser.value.id}`);
+    const mentalStateCountsResponse = await axios.get(`/mental-state-counts/${selectedTherapistId.value}/${user.id}`);
     console.log('Mental State Counts Response:', mentalStateCountsResponse.data); // Log response
 
     // Check if the session report response is valid
@@ -1889,5 +1983,10 @@ input[type="number"]:focus {
   /* Add some space below the text */
   margin-bottom: 1rem;
   /* Space between the header and following content */
+}
+
+.appointment-modal{
+  padding: 20px;
+  border-radius: 20px;
 }
 </style>
