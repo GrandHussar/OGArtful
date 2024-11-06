@@ -519,7 +519,6 @@ const chartOptions1 = {
 };
 const chartSeries = ref([0, 0, 0]);
 const appointments = ref([]);
-const showFeedbackForm = ref(false);
 const availableDates = ref([]);
 const availableDatesForClient = ref([]);
 const newAvailableDate = ref('');
@@ -1281,7 +1280,7 @@ const deleteAssessment = async (id) => {
 // Fetch all users for the therapist to select
 const fetchUserList = async () => {
   try {
-    const response = await axios.get('/users2'); // Calls the updated API
+    const response = await axios.get('/users3'); // Calls the updated API
     users.value = response.data; // Store the users
   } catch (error) {
     console.error('Error fetching user list:', error);
@@ -1296,10 +1295,10 @@ const formatDate = (dateObj) => {
   // console.log(`Extracted Date Parts - Year: ${year}, Month: ${month}, Day: ${day}`);
 
   // const timeString = dateObj.time ? dateObj.time : '00:00:00';
-  // console.log(`Raw Time String: ${timeString}`); 
+  // console.log(`Raw Time String: ${timeString}`);
 
-  // const dateString = `${month}/${day}/${year}`; 
-  // return `${dateString}, ${timeString}`; 
+  // const dateString = `${month}/${day}/${year}`;
+  // return `${dateString}, ${timeString}`;
   if (!dateObj || !dateObj.date) return 'Invalid date';
 
   const [year, month, day] = dateObj.date.split('-').map(part => parseInt(part, 10));

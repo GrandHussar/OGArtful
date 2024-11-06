@@ -42,45 +42,45 @@ class DashboardController extends Controller
         $request->validate([
             'comment' => 'required|string',
         ]);
-    
+
         $assessment = Assessment::findOrFail($id);
-    
+
         // Ensure the therapist owns this assessment
         if ($assessment->therapist_id !== Auth::id()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
-    
+
         $assessment->comment = $request->comment;
         $assessment->save();
-    
+
         return response()->json(['message' => 'Assessment updated successfully!']);
     }
-    
+
     // Delete assessment
     public function destroyAssessment($id)
     {
         $assessment = Assessment::findOrFail($id);
-    
+
         // Ensure the therapist owns this assessment
         if ($assessment->therapist_id !== Auth::id()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
-    
+
         $assessment->delete();
-    
+
         return response()->json(['message' => 'Assessment deleted successfully!']);
-    }    
+    }
 
     // Method to get all announcements
-    public function getAnnouncement() 
+    public function getAnnouncement()
     {
         $allAnnouncements = Announcement::with('therapist')->orderBy('created_at', 'desc')->get();
         $userAnnouncements = Announcement::where('therapist_id', Auth::id())->get();
-    
+
         // Log the queries/data for debugging
         \Log::info('All Announcements:', $allAnnouncements->toArray());
         \Log::info('User Announcements:', $userAnnouncements->toArray());
-    
+
         if ($allAnnouncements->isNotEmpty()) {
             return response()->json([
                 'allAnnouncements' => $allAnnouncements,
@@ -115,11 +115,11 @@ class DashboardController extends Controller
     public function getAssessment(Request $request)
     {
         $userId = $request->input('user_id');
-    
+
         $assessments = Assessment::where('user_id', $userId)
             ->with('therapist')  // Assuming therapist relationship is defined in the Assessment model
             ->get();
-    
+
         if ($assessments->isNotEmpty()) {
             return response()->json([
                 'assessments' => $assessments->map(function ($assessment) {
@@ -138,10 +138,10 @@ class DashboardController extends Controller
             ], 200);
         }
     }
-    
-    
-    
-    
+
+
+
+
     public function storeAssessment(Request $request)
     {
         // Validate the incoming data
@@ -159,20 +159,30 @@ class DashboardController extends Controller
 
         return redirect()->back()->with('success', 'Assessment submitted successfully.');
     }
-    
-    
+
+
 
     /**
      * Fetch moods data for the authenticated user.
      */
-    
+
      public function index2()
      {
          // Fetch users with the "user" role only (exclude admin and therapist)
          $users = User::whereHas('roles', function ($query) {
              $query->where('name', 'therapist');
          })->select('id', 'name')->get();
-     
+
+         return response()->json($users);
+     }
+
+     public function index3()
+     {
+         // Fetch users with the "user" role only (exclude admin and therapist)
+         $users = User::whereHas('roles', function ($query) {
+             $query->where('name', 'user');
+         })->select('id', 'name')->get();
+
          return response()->json($users);
      }
     public function getMoods(Request $request)
@@ -216,27 +226,27 @@ class DashboardController extends Controller
             'mood' => 'required|string|in:happy,sad,neutral,excited,angry',
             'date' => 'required|date',
         ]);
-    
+
         // Find the mood entry by user_id and date
         $mood = Mood::where('user_id', Auth::id())
                     ->where('date', $request->date)
                     ->first();
-    
+
         if (!$mood) {
             return response()->json(['error' => 'Mood entry not found'], 404); // Not found
         }
-    
+
         // Ensure the authenticated user owns the mood entry
         if ($mood->user_id !== Auth::id()) {
             return response()->json(['error' => 'Unauthorized'], 403); // Forbidden
         }
-    
+
         // Update the mood
         $mood->update([
             'mood' => $request->mood,
         ]);
-    
+
         return Inertia::location(route('newdashboard'));
     }
-    
+
 }

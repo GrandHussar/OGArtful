@@ -86,6 +86,7 @@ Route::get('/users/{user}/following', [FollowerController::class, 'fetchFollowin
 Route::post('/send-predefined-message', [ChatifyController::class, 'sendPredefinedMessage'])->name('send.predefined.message');
 Route::get('/users1', [ChatifyController::class, 'index1'])->name('users.index');
 Route::get('/users2', [DashboardController::class, 'index2'])->name('users.index2');
+Route::get('/users3', [DashboardController::class, 'index3'])->name('users.index3');
 Route::get('/available-dates', [AvailableDateController::class, 'index']);
 Route::post('/available-dates', [AvailableDateController::class, 'store']);
 Route::get('/available-dates/all', [AvailableDateController::class, 'getAvailableDates']);
@@ -218,8 +219,8 @@ Route::get('/searchBar', [SearchController::class, 'search'])->name('searchBar')
 Route::post('/integrateTherapist', 'MessagesController@integrateTherapist')->name('integrateTherapist');
 Route::get('/completed-sessions/{patientId}', [SessionReportController::class, 'getCompletedSessions'])
     ->name('sessions.completed');
-    Route::get('/session-report/{sessionId}', [SessionReportController::class, 'getSessionReport'])
+Route::get('/session-report/{sessionId}', [SessionReportController::class, 'getSessionReport'])
     ->name('session.report');
-    Route::get('/mental-state-counts/{appointmentId}/{userId}', [SessionReportController::class, 'getMentalStateCounts']);
-    Route::get('/therapists/{therapistId}/patients/{patientId}/session-summary', [SessionReportController::class, 'getPatientSessionSummary']);
+Route::get('/mental-state-counts/{appointmentId}/{userId}', [SessionReportController::class, 'getMentalStateCounts']);
+Route::get('/therapists/{therapistId}/patients/{patientId}/session-summary', [SessionReportController::class, 'getPatientSessionSummary']);
 require __DIR__ . '/auth.php';
