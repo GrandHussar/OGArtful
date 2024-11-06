@@ -592,7 +592,12 @@ const submitFeedbackForm = async () => {
     toast.error('Failed to submit feedback form.');
   }
 };
-
+const sessionReport = ref({
+  duration: null,
+  activity_type: '',
+  other_activity: '',
+  engagement_level: ''
+});
 const openAppointmentModal = (appointment) => {
   selectedAppointment.value = appointment;
   showAppointmentModal.value = true;
