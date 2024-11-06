@@ -462,7 +462,7 @@
                   <p><strong>Observed Emotions:</strong> {{ Array.isArray(sessionReport.observed_emotions) ? sessionReport.observed_emotions.join(', ') : 'No emotions recorded' }}</p>
                   <p><strong>Artistic Quality:</strong> {{ sessionReport.artistic_quality }}</p>
                   <p><strong>Artwork Theme:</strong> {{ sessionReport.artwork_theme }}</p>
-                  <p><strong>Other Theme:</strong> {{ sessionReport.other_theme }}</p>
+                  <p><strong>Other Theme:</strong> {{ sessionReport.other_theme || "None" }}</p>
                   <p><strong>Shared Significant Thoughts:</strong> {{ sessionReport.shared_significant_thoughts }}</p>
                   <p>
   <strong>Therapeutic Techniques:</strong> 
