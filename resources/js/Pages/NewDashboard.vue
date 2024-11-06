@@ -453,7 +453,14 @@
                   <p><strong>Duration:</strong> {{ sessionReport.duration }} minutes</p>
                   <p><strong>Activity Type:</strong> {{ sessionReport.activity_type }}</p>
                   <p><strong>Engagement Level:</strong> {{ sessionReport.engagement_level }}</p>
-                  <p><strong>Observed Emotions:</strong> {{ sessionReport.observed_emotions?.join(', ') || 'No emotions recorded' }}</p>
+                  <p><strong>Observed Emotions:</strong> {{ Array.isArray(sessionReport.observed_emotions) ? sessionReport.observed_emotions.join(', ') : 'No emotions recorded' }}</p>
+                  <p><strong>Artistic Quality:</strong> {{ sessionReport.artistic_quality }}</p>
+                  <p><strong>Artwork Theme:</strong> {{ sessionReport.artwork_theme }}</p>
+                  <p><strong>Shared Significant Thoughts:</strong> {{ sessionReport.shared_significant_thoughts }}</p>
+                  <p><strong>Therapeutic Techniques:</strong> {{ sessionReport.therapeutic_techniques }}</p>
+                  <p><strong>Mental State:</strong> {{ sessionReport.mental_state }}</p>
+                  <p><strong>Recommendations:</strong> {{ sessionReport.recommendations }}</p>
+                  <p><strong>Additional Notes:</strong> {{ sessionReport.additional_notes }}</p>
                   <!-- Additional fields as necessary -->
                 </div>
 
@@ -595,7 +602,17 @@ const sessionReport = ref({
   duration: null,
   activity_type: '',
   other_activity: '',
-  engagement_level: ''
+  engagement_level: '',
+  observed_emotions: '',
+  artistic_quality: '',
+    artwork_theme: '',
+    other_theme: '',
+    shared_significant_thoughts: '',
+    thoughts_detail: '',
+    therapeutic_techniques: '',
+    mental_state: '',
+    recommendations: '',
+    additional_notes: ''
 });
 const openAppointmentModal = (appointment) => {
   selectedAppointment.value = appointment;
